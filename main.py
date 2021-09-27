@@ -14,11 +14,13 @@ class NeuralNetwork:
         return self.values[-1]
 
     def display(self):
-        print(f"Weights:{self.weights}\nLayers:{self.values}")
+        for weight, values, enumerate in zip(self.weights, self.values, range(len(self.weights))):
+            print(weight, enumerate, "\n", values, enumerate)
 
     def addLayer(self, size):
+        print(f"Size = {self.values[-1].size}")
         self.weights.append(np.random.rand(size, self.values[-1].size))
-        self.values.append(np.zeros(size))
+        self.values.append(np.zeros((1, size)))
 
     def predict(self, inputData):
         # Invalid input handling
@@ -31,6 +33,20 @@ class NeuralNetwork:
             self.values[i] = self.values[i - 1].dot(self.weights[i].T)
         return self.values[-1]
 
+    def fit(self, input, expected):
+        output = self.predict(input)
+        delta = output - expected
+        for n in range(len(self.values) - 1, -1, -1):
+            if n > 0:
+                print(f"Delta shape: {delta.T.shape}\nWeights shape:{self.weights[n - 1].shape}")
+                wDelta = delta.T @ self.weights[n - 1]
+            else:
+                wDelta = delta.T @ input
+            delta = delta @ self.weights[n]
+            self.weights[n] = \
+                self.weights[n] - 0.01 * wDelta
+
+'''
     def fit(self, input, expected):
         # Invalid input handling
         if input.size != self.inputSize:
@@ -56,15 +72,15 @@ class NeuralNetwork:
                 weighted_delta = np.outer(delta, input)                # Calculating the final layer's delta
             else:
                 weighted_delta = np.outer(delta, self.values[i-1])  # Calculating the given layer's delta
-            self.weights[i] = self.weights[i] - 0.2 * weighted_delta        # Adjusting the weights
-
+            self.weights[i] = self.weights[i] - 0.02 * weighted_delta        # Adjusting the weights
+'''
 
 # todo: File handling
 # todo: More advanced user features
 #   Replace np.ones data with custom values
 # todo: Fix fit() for multi-layer nets
 
-inputData = np.ones(int(input("Enter input data size:")))
+inputData = np.ones((1, int(input("Enter input data size:"))))
 network = NeuralNetwork(inputData.size, 4)
 while True:
     print("1 - Add layer\n2 - Fit\n3 - Display\n4 - Predict")
@@ -72,11 +88,11 @@ while True:
     if operation == 1:
         network.addLayer(int(input("Enter layer size")))
     if operation == 2:
-        network.fit(inputData, np.ones(network.getOutputLayer().size))
+        network.fit(inputData, np.ones((1, network.getOutputLayer().size)))
     if operation == 3:
         network.display()
     if operation == 4:
-        print(network.predict(np.ones(network.inputSize)))
+        print(network.predict(np.ones((1, network.inputSize))))
 
 # inputData = np.ones(3)
 # expectedData = np.ones(1)+4
