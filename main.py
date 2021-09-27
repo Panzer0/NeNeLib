@@ -59,7 +59,7 @@ class NeuralNetwork:
             self.weights[i] = self.weights[i] - 0.2 * weighted_delta        # Adjusting the weights
 
 
-# todo: File handling AAAA
+# todo: File handling
 # todo: More advanced user features
 #   Replace np.ones data with custom values
 # todo: Fix fit() for multi-layer nets
