@@ -36,10 +36,17 @@ class NeuralNetwork:
     def fit(self, input, expected):
         output = self.predict(input)
         delta = output - expected
+        print(f"delta = {delta}")
+
+        # deltaSum = 0
+        # for i in delta:
+        #     print(i)
+        #     deltaSum += abs(i)
+        # print(deltaSum)
+
         for n in range(len(self.values) - 1, -1, -1):
             if n > 0:
-                print(f"Delta shape: {delta.T.shape}\nWeights shape:{self.weights[n - 1].shape}")
-                wDelta = delta.T @ self.weights[n - 1]
+                wDelta = delta @ self.weights[n]
             else:
                 wDelta = delta.T @ input
             delta = delta @ self.weights[n]
