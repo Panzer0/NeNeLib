@@ -15,7 +15,7 @@ class NeuralNetwork:
 
     def display(self):
         for weight, values, enumerate in zip(self.weights, self.values, range(len(self.weights))):
-            print(weight, enumerate, "\n", values, enumerate)
+            print(f"{weight} w[{enumerate}] \n{values} v[{enumerate}]")
 
     def addLayer(self, size):
         print(f"Size = {self.values[-1].size}")
@@ -38,12 +38,14 @@ class NeuralNetwork:
         delta = output - expected
         print(f"delta = {delta}")
 
-        # deltaSum = 0
-        # for i in delta:
-        #     print(i)
-        #     deltaSum += abs(i)
-        # print(deltaSum)
+        # todo: Replace weight with a reference
+        # for weight in self.weights[::-1]:
+        #     wDelta = delta @ weight
+        #     weight = weight - 0.05 * wDelta
+        #     delta = delta @ weight
 
+
+        # todo: Have another look at the weights used, something's not right. Weight[0] is discarded.
         for n in range(len(self.values) - 1, -1, -1):
             if n > 0:
                 wDelta = delta @ self.weights[n]
@@ -51,7 +53,7 @@ class NeuralNetwork:
                 wDelta = delta.T @ input
             delta = delta @ self.weights[n]
             self.weights[n] = \
-                self.weights[n] - 0.01 * wDelta
+                self.weights[n] - 0.05 * wDelta
 
 '''
     def fit(self, input, expected):
@@ -87,15 +89,17 @@ class NeuralNetwork:
 #   Replace np.ones data with custom values
 # todo: Fix fit() for multi-layer nets
 
+
 inputData = np.ones((1, int(input("Enter input data size:"))))
-network = NeuralNetwork(inputData.size, 4)
+firstLayerSize = int(input("Enter first layer size"))
+network = NeuralNetwork(inputData.size, firstLayerSize)
 while True:
     print("1 - Add layer\n2 - Fit\n3 - Display\n4 - Predict")
     operation = int(input("Choose operation:"))
     if operation == 1:
         network.addLayer(int(input("Enter layer size")))
     if operation == 2:
-        network.fit(inputData, np.ones((1, network.getOutputLayer().size)))
+        network.fit(inputData, np.ones((1, network.getOutputLayer().size)) * -1)
     if operation == 3:
         network.display()
     if operation == 4:
