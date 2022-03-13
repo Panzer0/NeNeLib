@@ -10,6 +10,12 @@ class NeuralNetwork:
         self.weights.append(np.random.rand(firstLayerSize, inputSize))
         self.values.append(np.zeros(firstLayerSize))
 
+    def isEmpty(self) -> bool:
+        return len(self.weights) > 0
+
+    def savetoFile(self):
+        pass
+
     def getOutputLayer(self):
         return self.values[-1]
 
@@ -21,6 +27,14 @@ class NeuralNetwork:
         print(f"Size = {self.values[-1].size}")
         self.weights.append(np.random.rand(size, self.values[-1].size))
         self.values.append(np.zeros((1, size)))
+
+    def refreshValues(self):
+        self.values = list()
+        for layer in self.weights:
+            self.values.append(np.zeros((1, layer.shape[0])))
+
+
+
 
     def predict(self, inputData):
         # Invalid input handling
@@ -104,6 +118,8 @@ while True:
         network.display()
     if operation == 4:
         print(network.predict(np.ones((1, network.inputSize))))
+    if operation == 5:
+        network.refreshValues()
 
 # inputData = np.ones(3)
 # expectedData = np.ones(1)+4
