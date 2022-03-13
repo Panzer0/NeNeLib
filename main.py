@@ -1,3 +1,5 @@
+import pickle
+
 import numpy as np
 
 
@@ -12,9 +14,6 @@ class NeuralNetwork:
 
     def isEmpty(self) -> bool:
         return len(self.weights) > 0
-
-    def savetoFile(self):
-        pass
 
     def getOutputLayer(self):
         return self.values[-1]
@@ -33,7 +32,14 @@ class NeuralNetwork:
         for layer in self.weights:
             self.values.append(np.zeros((1, layer.shape[0])))
 
+    def load(self, filename):
+        with open(filename, 'rb') as handle:
+            self.weights = pickle.load(handle)
+        self.refreshValues()
 
+    def save(self, filename):
+        with open(filename, 'wb') as handle:
+            pickle.dump(self.weights, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
     def predict(self, inputData):
@@ -108,7 +114,7 @@ inputData = np.ones((1, int(input("Enter input data size:"))))
 firstLayerSize = int(input("Enter first layer size"))
 network = NeuralNetwork(inputData.size, firstLayerSize)
 while True:
-    print("1 - Add layer\n2 - Fit\n3 - Display\n4 - Predict")
+    print("1 - Add layer\n2 - Fit\n3 - Display\n4 - Predict\n5 - Save\n6 - Load")
     operation = int(input("Choose operation:"))
     if operation == 1:
         network.addLayer(int(input("Enter layer size")))
@@ -119,7 +125,9 @@ while True:
     if operation == 4:
         print(network.predict(np.ones((1, network.inputSize))))
     if operation == 5:
-        network.refreshValues()
+        network.save("data.pickle")
+    if operation == 6:
+        network.load("data.pickle")
 
 # inputData = np.ones(3)
 # expectedData = np.ones(1)+4
