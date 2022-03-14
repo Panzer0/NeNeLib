@@ -121,7 +121,13 @@ inputData = np.ones((1, int(input("Enter input data size:"))))
 firstLayerSize = int(input("Enter first layer size"))
 network = NeuralNetwork(inputData.size, firstLayerSize)
 while True:
-    print("0 - Add quick layer\n1 - Add custom layer\n2 - Fit\n3 - Display\n4 - Predict\n5 - Save\n6 - Load")
+    print("0 - Add quick layer\n"
+          "1 - Add custom layer\n"
+          "2 - Fit\n"
+          "3 - Display\n"
+          "4 - Predict\n"
+          "5 - Save\n"
+          "6 - Load")
     operation = int(input("Choose operation:"))
     if operation == 0:
         network.addLayer(int(input("Enter layer size")))
