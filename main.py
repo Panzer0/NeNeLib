@@ -19,12 +19,19 @@ class NeuralNetwork:
         return self.values[-1]
 
     def display(self):
-        for weight, values, enumerate in zip(self.weights, self.values, range(len(self.weights))):
+        for weight, values, enumerate in \
+                zip(self.weights, self.values, range(len(self.weights))):
             print(f"{weight} w[{enumerate}] \n{values} v[{enumerate}]")
 
     def addLayer(self, size):
-        print(f"Size = {self.values[-1].size}")
+        # print(f"Size = {self.values[-1].size}")
         self.weights.append(np.random.rand(size, self.values[-1].size))
+        self.values.append(np.zeros((1, size)))
+
+    def addLayerRange(self, size, minValue, maxValue):
+        difference = abs(minValue - maxValue)
+        self.weights.append(
+            difference * np.random.rand(size, self.values[-1].size) + minValue)
         self.values.append(np.zeros((1, size)))
 
     def refreshValues(self):
@@ -114,10 +121,15 @@ inputData = np.ones((1, int(input("Enter input data size:"))))
 firstLayerSize = int(input("Enter first layer size"))
 network = NeuralNetwork(inputData.size, firstLayerSize)
 while True:
-    print("1 - Add layer\n2 - Fit\n3 - Display\n4 - Predict\n5 - Save\n6 - Load")
+    print("0 - Add quick layer\n1 - Add custom layer\n2 - Fit\n3 - Display\n4 - Predict\n5 - Save\n6 - Load")
     operation = int(input("Choose operation:"))
-    if operation == 1:
+    if operation == 0:
         network.addLayer(int(input("Enter layer size")))
+    if operation == 1:
+        network.addLayerRange(
+            int(input("Enter layer size")),
+            int(input("Enter min weight value")),
+            int(input("Enter max weight value")))
     if operation == 2:
         network.fit(inputData, np.ones((1, network.getOutputLayer().size)) * -1)
     if operation == 3:
