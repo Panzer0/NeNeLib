@@ -2,7 +2,7 @@ import pickle
 
 import numpy as np
 
-from data import Data
+from Data import Data
 
 
 class NeuralNetwork:
