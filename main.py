@@ -2,18 +2,31 @@ import pickle
 
 import numpy as np
 
+from data import Data
+
 
 class NeuralNetwork:
     def __init__(self, inputSize, firstLayerSize):
         self.values = list()
         self.weights = list()
+        self.dataset = list()
         self.inputSize = inputSize
+        self.outputSize = firstLayerSize
 
         self.weights.append(np.random.rand(firstLayerSize, inputSize))
         self.values.append(np.zeros(firstLayerSize))
 
+        self.blankData()
+
     def isEmpty(self) -> bool:
         return len(self.weights) > 0
+
+    def blankData(self):
+        self.dataset.clear()
+        self.dataset.append(
+            Data(np.ones(self.inputSize), np.ones(self.outputSize)))
+        print(self.dataset[0])
+
 
     def getOutputLayer(self):
         return self.values[-1]
@@ -27,12 +40,16 @@ class NeuralNetwork:
         # print(f"Size = {self.values[-1].size}")
         self.weights.append(np.random.rand(size, self.values[-1].size))
         self.values.append(np.zeros((1, size)))
+        self.outputSize = size
+        self.blankData()
 
     def addLayerRange(self, size, minValue, maxValue):
         difference = abs(minValue - maxValue)
         self.weights.append(
             difference * np.random.rand(size, self.values[-1].size) + minValue)
         self.values.append(np.zeros((1, size)))
+        self.outputSize = size
+        self.blankData()
 
     def refreshValues(self):
         self.values = list()
