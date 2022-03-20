@@ -24,9 +24,8 @@ class NeuralNetwork:
     def blankData(self):
         self.dataset.clear()
         self.dataset.append(
-            Data(np.ones(self.inputSize), np.ones(self.outputSize)))
+            Data(np.ones((1, self.inputSize)), np.ones((1, self.outputSize))))
         print(self.dataset[0])
-
 
     def getOutputLayer(self):
         return self.values[-1]
@@ -65,14 +64,15 @@ class NeuralNetwork:
         with open(filename, 'wb') as handle:
             pickle.dump(self.weights, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-
     def predict(self, inputData):
         # Invalid input handling
         if inputData.size != self.inputSize:
-            print("Invalid input data size")
+            print(
+                f"Invalid input data size, {inputData.size} != {self.inputSize}")
             return
 
-        self.values[0] = inputData.dot(self.weights[0].T)  # Multiplying the input data
+        self.values[0] = inputData.dot(
+            self.weights[0].T)  # Multiplying the input data
         for i in range(1, len(self.values)):
             self.values[i] = self.values[i - 1].dot(self.weights[i].T)
         return self.values[-1]
@@ -88,7 +88,6 @@ class NeuralNetwork:
         #     weight = weight - 0.05 * wDelta
         #     delta = delta @ weight
 
-
         # todo: Have another look at the weights used, something's not right. Weight[0] is discarded.
         for n in range(len(self.values) - 1, -1, -1):
             if n > 0:
@@ -98,6 +97,7 @@ class NeuralNetwork:
             delta = delta @ self.weights[n]
             self.weights[n] = \
                 self.weights[n] - 0.05 * wDelta
+
 
 '''
     def fit(self, input, expected):
@@ -154,15 +154,24 @@ while True:
             int(input("Enter min weight value")),
             int(input("Enter max weight value")))
     if operation == 2:
-        network.fit(inputData, np.ones((1, network.getOutputLayer().size)) * -1)
+        network.fit(network.dataset[0].input, network.dataset[0].output)
     if operation == 3:
         network.display()
     if operation == 4:
-        print(network.predict(np.ones((1, network.inputSize))))
+        print(network.predict(network.dataset[0].input))
     if operation == 5:
         network.save("data.pickle")
     if operation == 6:
         network.load("data.pickle")
+    if operation == 7:
+        # Read data, temporary solution
+        for i in range(len(network.dataset[0].output[0])):
+            network.dataset[0].output[0][i] = int(input("Enter value"))
+        print(network.dataset[0].output[0])
+
+        for i in range(len(network.dataset[0].input[0])):
+            network.dataset[0].input[0][i] = int(input("Enter value"))
+        print(network.dataset[0].input[0])
 
 # inputData = np.ones(3)
 # expectedData = np.ones(1)+4
