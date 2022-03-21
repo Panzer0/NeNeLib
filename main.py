@@ -25,7 +25,6 @@ class NeuralNetwork:
         self.dataset.clear()
         self.dataset.append(
             Data(np.ones((1, self.inputSize)), np.ones((1, self.outputSize))))
-        print(self.dataset[0])
 
     def getOutputLayer(self):
         return self.values[-1]
@@ -77,26 +76,36 @@ class NeuralNetwork:
             self.values[i] = self.values[i - 1].dot(self.weights[i].T)
         return self.values[-1]
 
-    def fit(self, input, expected):
-        output = self.predict(input)
-        delta = output - expected
-        print(f"delta = {delta}")
+    def fit(self):
+        for sample in self.dataset:
+            output = self.predict(sample.input)
+            delta = output - sample.output
+            print(f"delta = {delta}")
 
-        # todo: Replace weight with a reference
-        # for weight in self.weights[::-1]:
-        #     wDelta = delta @ weight
-        #     weight = weight - 0.05 * wDelta
-        #     delta = delta @ weight
+            # todo: Replace weight with a reference
+            # for weight in self.weights[::-1]:
+            #     wDelta = delta @ weight
+            #     weight = weight - 0.05 * wDelta
+            #     delta = delta @ weight
 
-        # todo: Have another look at the weights used, something's not right. Weight[0] is discarded.
-        for n in range(len(self.values) - 1, -1, -1):
-            if n > 0:
-                wDelta = delta @ self.weights[n]
-            else:
-                wDelta = delta.T @ input
-            delta = delta @ self.weights[n]
-            self.weights[n] = \
-                self.weights[n] - 0.05 * wDelta
+            # todo: Have another look at the weights used, something's not right. Weight[0] is discarded.
+            for n in range(len(self.values) - 1, -1, -1):
+                if n > 0:
+                    wDelta = delta @ self.weights[n]
+                else:
+                    wDelta = delta.T @ sample.input
+                delta = delta @ self.weights[n]
+                self.weights[n] = \
+                    self.weights[n] - 0.05 * wDelta
+
+    def updateLatestData(self):
+        for i in range(len(network.dataset[-1].input[0])):
+            self.dataset[-1].input[0][i] = float(input("Enter input value"))
+        print(self.dataset[-1].input[0])
+
+        for i in range(len(self.dataset[-1].output[0])):
+            self.dataset[-1].output[0][i] = float(input("Enter output value"))
+        print(self.dataset[-1].output[0])
 
 
 '''
@@ -144,7 +153,9 @@ while True:
           "3 - Display\n"
           "4 - Predict\n"
           "5 - Save\n"
-          "6 - Load")
+          "6 - Load\n"
+          "7 - Overwrite latest data\n"
+          "8 - Append new data\n")
     operation = int(input("Choose operation:"))
     if operation == 0:
         network.addLayer(int(input("Enter layer size")))
@@ -154,7 +165,8 @@ while True:
             int(input("Enter min weight value")),
             int(input("Enter max weight value")))
     if operation == 2:
-        network.fit(network.dataset[0].input, network.dataset[0].output)
+        for i in range(100):
+            network.fit()
     if operation == 3:
         network.display()
     if operation == 4:
@@ -165,13 +177,19 @@ while True:
         network.load("data.pickle")
     if operation == 7:
         # Read data, temporary solution
-        for i in range(len(network.dataset[0].output[0])):
-            network.dataset[0].output[0][i] = int(input("Enter value"))
-        print(network.dataset[0].output[0])
+        network.updateLatestData()
+        print(network.dataset[-1].output[0])
+    if operation == 8:
+        network.dataset.append(
+            Data(np.ones((1, network.inputSize)), np.ones((1, network.outputSize))))
+        network.updateLatestData()
 
-        for i in range(len(network.dataset[0].input[0])):
-            network.dataset[0].input[0][i] = int(input("Enter value"))
-        print(network.dataset[0].input[0])
+        for data in network.dataset:
+            print(f"Input:{data.input[0]}")
+            print(f"Output:{data.output[0]}\n")
+
+
+
 
 # inputData = np.ones(3)
 # expectedData = np.ones(1)+4
