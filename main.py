@@ -98,7 +98,7 @@ class NeuralNetwork:
                 self.weights[n] = \
                     self.weights[n] - 0.05 * wDelta
 
-    def updateLatestData(self):
+    def updateLatestDataManual(self):
         for i in range(len(network.dataset[-1].input[0])):
             self.dataset[-1].input[0][i] = float(input("Enter input value"))
         print(self.dataset[-1].input[0])
@@ -106,6 +106,19 @@ class NeuralNetwork:
         for i in range(len(self.dataset[-1].output[0])):
             self.dataset[-1].output[0][i] = float(input("Enter output value"))
         print(self.dataset[-1].output[0])
+
+    def addSampleManual(self):
+        network.dataset.append(
+            Data(np.ones((1, network.inputSize)), np.ones((1, network.outputSize))))
+        network.updateLatestDataManual()
+
+    def displayDataset(self):
+        for data in network.dataset:
+            print(f"Input:{data.input[0]}")
+            print(f"Output:{data.output[0]}\n")
+
+
+
 
 
 '''
@@ -177,16 +190,14 @@ while True:
         network.load("data.pickle")
     if operation == 7:
         # Read data, temporary solution
-        network.updateLatestData()
-        print(network.dataset[-1].output[0])
+        network.updateLatestDataManual()
+        network.displayDataset()
     if operation == 8:
-        network.dataset.append(
-            Data(np.ones((1, network.inputSize)), np.ones((1, network.outputSize))))
-        network.updateLatestData()
+        network.addSampleManual()
+        network.displayDataset()
 
-        for data in network.dataset:
-            print(f"Input:{data.input[0]}")
-            print(f"Output:{data.output[0]}\n")
+
+
 
 
 
