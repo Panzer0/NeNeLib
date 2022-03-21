@@ -221,7 +221,9 @@ while True:
           "5 - Save\n"
           "6 - Load\n"
           "7 - Overwrite latest data\n"
-          "8 - Append new data\n")
+          "8 - Append new data\n"
+          "9 - Load colour file (REQUIRES 3/4 I/O FORMAT)\n"
+          "10- Validate colours (REQUIRES 3/4 I/O FORMAT)\n")
     operation = int(input("Choose operation:"))
     if operation == 0:
         network.addLayer(int(input("Enter layer size")))
