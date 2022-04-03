@@ -2,24 +2,30 @@ import pickle
 
 import numpy as np
 
+import ActivationFunctions
 from Data import Data
+from WeightLayer import WeightLayer
 
 
 class NeuralNetwork:
     def __init__(self, inputSize, firstLayerSize):
         self.values = list()
-        self.weights = list()
+        self.weightLayers = list()
         self.dataset = list()
         self.inputSize = inputSize
         self.outputSize = firstLayerSize
 
-        self.weights.append(np.random.rand(firstLayerSize, inputSize))
+        self.weightLayers.append(
+            WeightLayer(
+                np.random.rand(firstLayerSize, inputSize),
+                ActivationFunctions.ReLU,
+                ActivationFunctions.ReLUDeriv))
         self.values.append(np.zeros(firstLayerSize))
 
         self.blankData()
 
     def isEmpty(self) -> bool:
-        return len(self.weights) > 0
+        return len(self.weightLayers) > 0
 
     def blankData(self):
         self.dataset.clear()
@@ -31,37 +37,47 @@ class NeuralNetwork:
 
     def display(self):
         for weight, values, enumerate in \
-                zip(self.weights, self.values, range(len(self.weights))):
+                zip(self.weightLayers, self.values,
+                    range(len(self.weightLayers))):
             print(f"{weight} w[{enumerate}] \n{values} v[{enumerate}]")
 
     def addLayer(self, size):
         # print(f"Size = {self.values[-1].size}")
-        self.weights.append(np.random.rand(size, self.values[-1].size))
+        self.weightLayers.append(
+            WeightLayer(
+                np.random.rand(size, self.values[-1].size),
+                ActivationFunctions.ReLU,
+                ActivationFunctions.ReLUDeriv))
         self.values.append(np.zeros((1, size)))
         self.outputSize = size
         self.blankData()
 
     def addLayerRange(self, size, minValue, maxValue):
         difference = abs(minValue - maxValue)
-        self.weights.append(
-            difference * np.random.rand(size, self.values[-1].size) + minValue)
+        self.weightLayers.append(
+            WeightLayer(
+                difference * np.random.rand(size,
+                                            self.values[-1].size) + minValue,
+                ActivationFunctions.ReLU,
+                ActivationFunctions.ReLUDeriv))
         self.values.append(np.zeros((1, size)))
         self.outputSize = size
         self.blankData()
 
     def refreshValues(self):
         self.values = list()
-        for layer in self.weights:
-            self.values.append(np.zeros((1, layer.shape[0])))
+        for layer in self.weightLayers:
+            self.values.append(np.zeros((1, layer.getShape()[0])))
 
     def load(self, filename):
         with open(filename, 'rb') as handle:
-            self.weights = pickle.load(handle)
+            self.weightLayers = pickle.load(handle)
         self.refreshValues()
 
     def save(self, filename):
         with open(filename, 'wb') as handle:
-            pickle.dump(self.weights, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.weightLayers, handle,
+                        protocol=pickle.HIGHEST_PROTOCOL)
 
     def predict(self, inputData):
         # Invalid input handling
@@ -71,9 +87,28 @@ class NeuralNetwork:
             return
 
         self.values[0] = inputData.dot(
-            self.weights[0].T)  # Multiplying the input data
+            self.weightLayers[0].weights.T)  # Multiplying the input data
         for i in range(1, len(self.values)):
-            self.values[i] = self.values[i - 1].dot(self.weights[i].T)
+            self.values[i] = self.values[i - 1].dot(
+                self.weightLayers[i].weights.T)
+        return self.values[-1]
+
+    # Same as predict, but applies activation method
+    # Perhaps combine the two into a single method with a flag argument?
+    def forwardPropagate(self, inputData):
+        # Invalid input handling
+        if inputData.size != self.inputSize:
+            print(
+                f"Invalid input data size, {inputData.size} != {self.inputSize}")
+            return
+
+        self.values[0] = inputData.dot(
+            self.weightLayers[0].weights.T)  # Multiplying the input data
+        for i in range(1, len(self.values)):
+            self.values[i] = self.values[i - 1].dot(
+                self.weightLayers[i].weights.T)
+            self.values[i] = self.weightLayers[i - 1].activationMethod(
+                self.values[i])
         return self.values[-1]
 
     def fit(self):
@@ -88,15 +123,18 @@ class NeuralNetwork:
             #     weight = weight - 0.05 * wDelta
             #     delta = delta @ weight
 
-            # todo: Have another look at the weights used, something's not right. Weight[0] is discarded.
+            # todo: Have another look at the weights used, something's not
+            #  right. Weight[0] is discarded.
             for n in range(len(self.values) - 1, -1, -1):
                 if n > 0:
-                    wDelta = delta @ self.weights[n]
+                    wDelta = delta @ self.weightLayers[n].weights
+                    # todo: temporary solution, replace with deriv
+                    wDelta = self.weightLayers[n].activationMethod(wDelta)
                 else:
                     wDelta = delta.T @ sample.input
-                delta = delta @ self.weights[n]
-                self.weights[n] = \
-                    self.weights[n] - 0.05 * wDelta
+                delta = delta @ self.weightLayers[n].weights
+                self.weightLayers[n].weights = \
+                    self.weightLayers[n].weights - 0.05 * wDelta
 
     def updateLatestDataManual(self):
         for i in range(len(network.dataset[-1].input[0])):
@@ -109,7 +147,8 @@ class NeuralNetwork:
 
     def addSampleManual(self):
         network.dataset.append(
-            Data(np.ones((1, network.inputSize)), np.ones((1, network.outputSize))))
+            Data(np.ones((1, network.inputSize)),
+                 np.ones((1, network.outputSize))))
         network.updateLatestDataManual()
 
     def displayDataset(self):
@@ -119,16 +158,18 @@ class NeuralNetwork:
 
     def addSampleColour(self, r: float, g: float, b: float, colour: int):
         network.dataset.append(
-            Data(np.zeros((1, network.inputSize)), np.zeros((1, network.outputSize))))
+            Data(np.zeros((1, network.inputSize)),
+                 np.zeros((1, network.outputSize))))
 
         self.dataset[-1].input[0][0] = r
         self.dataset[-1].input[0][1] = g
         self.dataset[-1].input[0][2] = b
 
         print(f"colour = {colour}")
-        self.dataset[-1].output[0][colour-1] = 1
+        self.dataset[-1].output[0][colour - 1] = 1
 
-        print(f"Appending input{self.dataset[-1].input[0]}, output = {self.dataset[-1].output[0]}")
+        print(
+            f"Appending input{self.dataset[-1].input[0]}, output = {self.dataset[-1].output[0]}")
 
     def loadColourFile(self, filename):
         with open(filename, 'r') as handle:
@@ -168,10 +209,12 @@ class NeuralNetwork:
                 print("Correct!")
                 correct += 1
             else:
-                print(f"WRONG!, {np.argmax(result[0])} != {np.argmax(sample.output[0])}")
-        return float(correct/total * 100)
+                print(
+                    f"WRONG!, {np.argmax(result[0])} != {np.argmax(sample.output[0])}")
+        return float(correct / total * 100)
 
-
+    def activationMethodTest(self):
+        self.weightLayers[0].applyMethod()
 
 
 '''
@@ -255,7 +298,10 @@ while True:
         network.loadColourFile(str(input("Enter file name")))
     if operation == 10:
         print(f"{network.validateColours()}%")
-
+    # todo: Remove when certain it's functional
+    if operation == 11:
+        # Temporary and for testing purposes only
+        network.activationMethodTest()
 
 # inputData = np.ones(3)
 # expectedData = np.ones(1)+4
