@@ -127,10 +127,12 @@ class NeuralNetwork:
             #  right. Weight[0] is discarded.
             for n in range(len(self.values) - 1, -1, -1):
                 if n > 0:
+                    print(f"Handling weights[{n}]")
                     wDelta = delta @ self.weightLayers[n].weights
                     # todo: temporary solution, replace with deriv
-                    wDelta = self.weightLayers[n].activationMethod(wDelta)
+                    # wDelta = self.weightLayers[n].activationMethod(wDelta)
                 else:
+
                     wDelta = delta.T @ sample.input
                 delta = delta @ self.weightLayers[n].weights
                 self.weightLayers[n].weights = \
@@ -150,6 +152,11 @@ class NeuralNetwork:
             Data(np.ones((1, network.inputSize)),
                  np.ones((1, network.outputSize))))
         network.updateLatestDataManual()
+
+    def addSampleRandom(self):
+        network.dataset.append(
+            Data(np.random.rand(1, network.inputSize),
+                 np.random.rand(1, network.outputSize)))
 
     def displayDataset(self):
         for data in network.dataset:
@@ -276,7 +283,8 @@ while True:
             int(input("Enter min weight value")),
             int(input("Enter max weight value")))
     if operation == 2:
-        for i in range(50):
+        count = int(input("How many times?"))
+        for i in range(count):
             network.fit()
             print("\n")
     if operation == 3:
@@ -302,6 +310,9 @@ while True:
     if operation == 11:
         # Temporary and for testing purposes only
         network.activationMethodTest()
+    if operation == 12:
+        network.addSampleRandom()
+        network.displayDataset()
 
 # inputData = np.ones(3)
 # expectedData = np.ones(1)+4
