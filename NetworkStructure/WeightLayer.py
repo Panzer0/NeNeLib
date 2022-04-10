@@ -2,13 +2,8 @@ import ActivationFunctions
 
 #todo: Remove Activation method from uses of weightLayer()
 class WeightLayer:
-    def __init__(self, weights, activationMethod=None, activationMethodDeriv = None):
+    def __init__(self, weights):
         self.weights = weights
-        if activationMethod is None:
-            self.activationMethod = ActivationFunctions.noMethod
-            self.activationMethodDeriv = ActivationFunctions.noMethodDeriv
-        self.activationMethod = activationMethod
-        self.activationMethodDeriv = activationMethodDeriv
 
     def getShape(self):
         return self.weights.shape
