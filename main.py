@@ -308,39 +308,8 @@ class NeuralNetwork:
         self.values[0].applyMethod()
 
 
-"""
-    def fit(self, input, expected):
-        # Invalid input handling
-        if input.size != self.inputSize:
-            print("Invalid input data size")
-            return
-        if expected.size != self.getOutputLayer().size:
-            print("Invalid expected data size")
-            return
-
-        output = self.predict(input)  # Calculating the output layer's values
-        output_delta = output - expected  # Calculating the output layer's delta
-        print(f"Output:\n{output}")
-        print(f"Output delta = {output_delta}")
-
-        # Adjusting values
-        for i in range(len(self.values) - 1, 0, -1):
-            print(f"i = {i}")
-            if i == len(self.values) - 1:
-                delta = output_delta
-            else:
-                delta = np.dot(delta.T, self.values[i])  # Calculating the delta of the lower layer neurons
-            if i == 0:
-                weighted_delta = np.outer(delta, input)                # Calculating the final layer's delta
-            else:
-                weighted_delta = np.outer(delta, self.values[i-1])  # Calculating the given layer's delta
-            self.values[i] = self.values[i] - 0.02 * weighted_delta        # Adjusting the values
-"""
-
 # todo: File handling
-# todo: More advanced user features
-#   Replace np.ones data with custom values
-# todo: Fix fit() for multi-layer nets
+# todo: Fix fit() for more advanced networks
 
 
 inputData = np.ones((1, int(input("Enter input data size: "))))

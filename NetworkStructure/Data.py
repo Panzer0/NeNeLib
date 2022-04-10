@@ -7,8 +7,9 @@ class Data:
         self.output = network_output
 
     def matchesSize(self, other_data):
-        return self.input == other_data.input \
-               and self.output == other_data.output
+        return (
+            self.input == other_data.input and self.output == other_data.output
+        )
 
     def __str__(self):
         return "Input: " + str(self.input) + "\nOutput: " + str(self.output)
