@@ -12,4 +12,4 @@ class Data:
         )
 
     def __str__(self):
-        return "Input: " + str(self.input) + "\nOutput: " + str(self.output)
+        return f"Input: {str(self.input)} \nOutput: {str(self.output)}"
