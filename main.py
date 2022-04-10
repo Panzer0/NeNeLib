@@ -371,9 +371,9 @@ while True:
         network.addSampleManual()
         network.displayDataset()
     if operation == 9:
-        network.loadColourFile(str(input("Enter file name: ")))
-    if operation == 10:
-        print(f"{network.validateColours()}%")
-    if operation == 11:
         network.addSampleRandom()
         network.displayDataset()
+    if operation == 10:
+        network.loadColourFile(str(input("Enter file name: ")))
+    if operation == 11:
+        print(f"{network.validateColours()}%")
