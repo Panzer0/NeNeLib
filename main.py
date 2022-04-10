@@ -14,7 +14,8 @@ class NeuralNetwork:
     def __init__(self, inputSize, firstLayerSize):
         self.values = list()
         self.weightLayers = list()
-        self.dataset = list()
+        self.training = list()
+        self.testing = list()
         self.inputSize = inputSize
         self.outputSize = firstLayerSize
 
@@ -34,11 +35,11 @@ class NeuralNetwork:
     def isEmpty(self) -> bool:
         return len(self.weightLayers) > 0
 
-    def hasData(self) -> bool:
-        return len(self.dataset) > 0
+    def hasData(self, target) -> bool:
+        return len(target) > 0
 
     def blankData(self):
-        self.dataset.clear()
+        self.training.clear()
         # self.dataset.append(
         #     Data(np.ones((1, self.inputSize)), np.ones((1, self.outputSize))))
 
@@ -47,7 +48,7 @@ class NeuralNetwork:
 
     def display(self):
         for weight, values, index in zip(
-                self.weightLayers, self.values, range(len(self.weightLayers))
+            self.weightLayers, self.values, range(len(self.weightLayers))
         ):
             print(f"{weight} w[{index}]\n" f"{values} v[{index}]")
 
@@ -142,7 +143,7 @@ class NeuralNetwork:
         return self.values[-1].values
 
     def fit_new(self):
-        for sample in self.dataset:
+        for sample in self.training:
             output = self.forwardPropagate(sample.input)
             self.values[-1].delta = sample.output - output
             print(f"\nOutput delta = {self.values[-1].delta}")
@@ -155,10 +156,10 @@ class NeuralNetwork:
                     f"v[{i + 1}].delta.dot(w[{i + 1}]) * v[{i}].deriv "
                 )
                 self.values[i].delta = (
-                        self.values[i + 1].delta.dot(
-                            self.weightLayers[i + 1].weights
-                        )
-                        * self.values[i].getAfterDeriv()
+                    self.values[i + 1].delta.dot(
+                        self.weightLayers[i + 1].weights
+                    )
+                    * self.values[i].getAfterDeriv()
                 )
 
             # Backpropagate
@@ -169,8 +170,8 @@ class NeuralNetwork:
 
                     # print(f"Turning 0 {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
-                            self.weightLayers[i].weights
-                            + ALPHA * sample.input.T.dot(self.values[i].delta).T
+                        self.weightLayers[i].weights
+                        + ALPHA * sample.input.T.dot(self.values[i].delta).T
                     )
                     # print(f"into {self.weightLayers[i].weights}")
                 else:
@@ -178,16 +179,16 @@ class NeuralNetwork:
 
                     # print(f"Turning {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
-                            self.weightLayers[i].weights
-                            + ALPHA
-                            * self.values[i - 1]
-                            .values.T.dot(self.values[i].delta)
-                            .T
+                        self.weightLayers[i].weights
+                        + ALPHA
+                        * self.values[i - 1]
+                        .values.T.dot(self.values[i].delta)
+                        .T
                     )
                     # print(f"into {self.weightLayers[i].weights}")
 
     def fit(self):
-        for sample in self.dataset:
+        for sample in self.training:
             output = self.forwardPropagate(sample.input)
             delta = output - sample.output
             print(f"delta = {delta}")
@@ -211,60 +212,59 @@ class NeuralNetwork:
                     wDelta = delta.T @ sample.input
                 delta = delta @ self.weightLayers[n].weights
                 self.weightLayers[n].weights = (
-                        self.weightLayers[n].weights - 0.05 * wDelta
+                    self.weightLayers[n].weights - 0.05 * wDelta
                 )
 
-    def updateLatestDataManual(self):
-        for i in range(len(self.dataset[-1].input[0])):
-            self.dataset[-1].input[0][i] = float(input("Enter input value: "))
-        print(self.dataset[-1].input[0])
+    def updateLatestDataManual(self, target):
+        for i in range(len(target[-1].input[0])):
+            target[-1].input[0][i] = float(input("Enter input value: "))
+        print(target[-1].input[0])
 
-        for i in range(len(self.dataset[-1].output[0])):
-            self.dataset[-1].output[0][i] = float(input("Enter output value: "))
-        print(self.dataset[-1].output[0])
+        for i in range(len(target[-1].output[0])):
+            target[-1].output[0][i] = float(input("Enter output value: "))
+        print(target[-1].output[0])
 
-    def addSampleManual(self):
-        network.dataset.append(
-            Data(
-                np.ones((1, network.inputSize)),
-                np.ones((1, network.outputSize)),
-            )
+    def addSampleManual(self, target):
+        target.append(
+            Data(np.ones((1, self.inputSize)), np.ones((1, self.outputSize)),)
         )
-        network.updateLatestDataManual()
+        network.updateLatestDataManual(self.training)
 
-    def addSampleRandom(self):
-        network.dataset.append(
+    def addSampleRandom(self, target):
+        target.append(
             Data(
-                np.random.rand(1, network.inputSize),
-                np.random.rand(1, network.outputSize),
+                np.random.rand(1, self.inputSize),
+                np.random.rand(1, self.outputSize),
             )
         )
 
-    def displayDataset(self):
-        for data in network.dataset:
+    def displayDataset(self, target):
+        for data in target:
             print(f"Input:{data.input[0]}")
             print(f"Output:{data.output[0]}\n")
 
-    def addSampleColour(self, r: float, g: float, b: float, colour: int):
-        network.dataset.append(
+    def addSampleColour(
+        self, r: float, g: float, b: float, colour: int, target
+    ):
+        target.append(
             Data(
                 np.zeros((1, network.inputSize)),
                 np.zeros((1, network.outputSize)),
             )
         )
 
-        self.dataset[-1].input[0][0] = r
-        self.dataset[-1].input[0][1] = g
-        self.dataset[-1].input[0][2] = b
+        target[-1].input[0][0] = r
+        target[-1].input[0][1] = g
+        target[-1].input[0][2] = b
 
         print(f"colour = {colour}")
-        self.dataset[-1].output[0][colour - 1] = 1
+        target[-1].output[0][colour - 1] = 1
 
         print(
-            f"Appending input{self.dataset[-1].input[0]}, output = {self.dataset[-1].output[0]}"
+            f"Appending input{target[-1].input[0]}, output = {target[-1].output[0]}"
         )
 
-    def loadColourFile(self, filename):
+    def loadColourFile(self, filename, target):
         with open(filename, "r") as handle:
             data = [*map(float, handle.read().split())]
 
@@ -285,13 +285,13 @@ class NeuralNetwork:
             elif flag == 3:
                 print(f"3, {data[i]}")
                 out = data[i]
-                self.addSampleColour(r, g, b, int(out))
+                self.addSampleColour(r, g, b, int(out), target)
                 flag = 0
 
-    def validateColours(self):
+    def validateColours(self, target):
         total = 0
         correct = 0
-        for sample in self.dataset:
+        for sample in target:
             total += 1
             result = self.predict(sample.input)
             print(result)
@@ -299,11 +299,11 @@ class NeuralNetwork:
             print(f"Argmax = {np.argmax(result[0])}")
 
             if np.argmax(result[0]) == np.argmax(sample.output[0]):
-                print("Correct!")
+                print("Correct!\n")
                 correct += 1
             else:
                 print(
-                    f"WRONG!, {np.argmax(result[0])} != {np.argmax(sample.output[0])}"
+                    f"WRONG!, {np.argmax(result[0])} != {np.argmax(sample.output[0])}\n"
                 )
         return float(correct / total * 100)
 
@@ -329,9 +329,9 @@ while True:
         "6 - Load\n"
         "7 - Overwrite latest data\n"
         "8 - Append new data\n"
-        "9 - Load colour file (REQUIRES 3/4 I/O FORMAT)\n"
-        "10- Validate colours (REQUIRES 3/4 I/O FORMAT)\n"
-        "11- Append random data\n"
+        "9 - Append random data\n"
+        "10- Load colour file (REQUIRES 3/4 I/O FORMAT)\n"
+        "11- Validate colours (REQUIRES 3/4 I/O FORMAT)\n"
     )
     operation = int(input("Choose operation: "))
     if operation == 0:
@@ -343,7 +343,7 @@ while True:
             int(input("Enter max weight value: ")),
         )
     if operation == 2:
-        if network.hasData():
+        if network.hasData(network.training):
             count = int(input("How many times? "))
             for i in range(count):
                 network.fit_new()
@@ -353,8 +353,12 @@ while True:
     if operation == 3:
         network.display()
     if operation == 4:
-        if network.hasData():
-            print(network.predict(network.dataset[0].input))
+        choice = int(input("Training (0) or testing (1) data?"))
+        target = network.training if choice == 0 else network.testing
+
+        if network.hasData(target):
+            for sample in target:
+                print(network.predict(sample.input))
         else:
             print("No data available")
     if operation == 5:
@@ -362,18 +366,33 @@ while True:
     if operation == 6:
         network.load("data.pickle")
     if operation == 7:
-        if network.hasData():
-            network.updateLatestDataManual()
-            network.displayDataset()
+        choice = int(input("Training (0) or testing (1) data?"))
+        target = network.training if choice == 0 else network.testing
+
+        if network.hasData(target):
+            network.updateLatestDataManual(target)
+            network.displayDataset(target)
         else:
             print("No data available")
     if operation == 8:
-        network.addSampleManual()
-        network.displayDataset()
+        choice = int(input("Training (0) or testing (1) data?"))
+        target = network.training if choice == 0 else network.testing
+
+        network.addSampleManual(target)
+        network.displayDataset(target)
     if operation == 9:
-        network.addSampleRandom()
-        network.displayDataset()
+        choice = int(input("Training (0) or testing (1) data?"))
+        target = network.training if choice == 0 else network.testing
+
+        network.addSampleRandom(target)
+        network.displayDataset(target)
     if operation == 10:
-        network.loadColourFile(str(input("Enter file name: ")))
+        choice = int(input("Training (0) or testing (1) data?"))
+        target = network.training if choice == 0 else network.testing
+
+        network.loadColourFile(str(input("Enter file name: ")), target)
     if operation == 11:
-        print(f"{network.validateColours()}%")
+        choice = int(input("Training (0) or testing (1) data?"))
+        target = network.training if choice == 0 else network.testing
+
+        print(f"{network.validateColours(target)}%")
