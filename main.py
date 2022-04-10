@@ -7,7 +7,7 @@ from NetworkStructure.Data import Data
 from NetworkStructure.ValueLayer import ValueLayer
 from NetworkStructure.WeightLayer import WeightLayer
 
-ALPHA = 0.01
+ALPHA = 0.05
 
 
 class NeuralNetwork:
@@ -34,6 +34,9 @@ class NeuralNetwork:
     def isEmpty(self) -> bool:
         return len(self.weightLayers) > 0
 
+    def hasData(self) -> bool:
+        return len(self.dataset) > 0
+
     def blankData(self):
         self.dataset.clear()
         # self.dataset.append(
@@ -44,7 +47,7 @@ class NeuralNetwork:
 
     def display(self):
         for weight, values, index in zip(
-            self.weightLayers, self.values, range(len(self.weightLayers))
+                self.weightLayers, self.values, range(len(self.weightLayers))
         ):
             print(f"{weight} w[{index}]\n" f"{values} v[{index}]")
 
@@ -152,10 +155,10 @@ class NeuralNetwork:
                     f"v[{i + 1}].delta.dot(w[{i + 1}]) * v[{i}].deriv "
                 )
                 self.values[i].delta = (
-                    self.values[i + 1].delta.dot(
-                        self.weightLayers[i + 1].weights
-                    )
-                    * self.values[i].getAfterDeriv()
+                        self.values[i + 1].delta.dot(
+                            self.weightLayers[i + 1].weights
+                        )
+                        * self.values[i].getAfterDeriv()
                 )
 
             # Backpropagate
@@ -166,20 +169,20 @@ class NeuralNetwork:
 
                     # print(f"Turning 0 {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
-                        self.weightLayers[i].weights
-                        + ALPHA * sample.input.T.dot(self.values[i].delta).T
+                            self.weightLayers[i].weights
+                            + ALPHA * sample.input.T.dot(self.values[i].delta).T
                     )
                     # print(f"into {self.weightLayers[i].weights}")
                 else:
-                    print(f"w[{i}] += alpha * v[{i-1}].T.dot(v[{i}].delta).T")
+                    print(f"w[{i}] += alpha * v[{i - 1}].T.dot(v[{i}].delta).T")
 
                     # print(f"Turning {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
-                        self.weightLayers[i].weights
-                        + ALPHA
-                        * self.values[i - 1]
-                        .values.T.dot(self.values[i].delta)
-                        .T
+                            self.weightLayers[i].weights
+                            + ALPHA
+                            * self.values[i - 1]
+                            .values.T.dot(self.values[i].delta)
+                            .T
                     )
                     # print(f"into {self.weightLayers[i].weights}")
 
@@ -208,7 +211,7 @@ class NeuralNetwork:
                     wDelta = delta.T @ sample.input
                 delta = delta @ self.weightLayers[n].weights
                 self.weightLayers[n].weights = (
-                    self.weightLayers[n].weights - 0.05 * wDelta
+                        self.weightLayers[n].weights - 0.05 * wDelta
                 )
 
     def updateLatestDataManual(self):
@@ -328,6 +331,7 @@ while True:
         "8 - Append new data\n"
         "9 - Load colour file (REQUIRES 3/4 I/O FORMAT)\n"
         "10- Validate colours (REQUIRES 3/4 I/O FORMAT)\n"
+        "11- Append random data\n"
     )
     operation = int(input("Choose operation: "))
     if operation == 0:
@@ -335,26 +339,34 @@ while True:
     if operation == 1:
         network.addLayerRange(
             int(input("Enter layer size: ")),
-            int(input("Enter min weight value:")),
+            int(input("Enter min weight value: ")),
             int(input("Enter max weight value: ")),
         )
     if operation == 2:
-        count = int(input("How many times? "))
-        for i in range(count):
-            network.fit_new()
-            print("\n")
+        if network.hasData():
+            count = int(input("How many times? "))
+            for i in range(count):
+                network.fit_new()
+                print("\n")
+        else:
+            print("No data available")
     if operation == 3:
         network.display()
     if operation == 4:
-        print(network.predict(network.dataset[0].input))
+        if network.hasData():
+            print(network.predict(network.dataset[0].input))
+        else:
+            print("No data available")
     if operation == 5:
         network.save("data.pickle")
     if operation == 6:
         network.load("data.pickle")
     if operation == 7:
-        # Read data, temporary solution
-        network.updateLatestDataManual()
-        network.displayDataset()
+        if network.hasData():
+            network.updateLatestDataManual()
+            network.displayDataset()
+        else:
+            print("No data available")
     if operation == 8:
         network.addSampleManual()
         network.displayDataset()
