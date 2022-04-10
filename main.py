@@ -3,8 +3,9 @@ import pickle
 import numpy as np
 
 import ActivationFunctions
-from Data import Data
-from WeightLayer import WeightLayer
+from NetworkStructure.Data import Data
+from NetworkStructure.ValueLayer import ValueLayer
+from NetworkStructure.WeightLayer import WeightLayer
 
 
 class NeuralNetwork:
@@ -20,7 +21,7 @@ class NeuralNetwork:
                 np.random.rand(firstLayerSize, inputSize),
                 ActivationFunctions.ReLU,
                 ActivationFunctions.ReLUDeriv))
-        self.values.append(np.zeros(firstLayerSize))
+        self.values.append(ValueLayer(firstLayerSize))
 
         self.blankData()
 
@@ -36,19 +37,20 @@ class NeuralNetwork:
         return self.values[-1]
 
     def display(self):
-        for weight, values, enumerate in \
+        for weight, values, index in \
                 zip(self.weightLayers, self.values,
                     range(len(self.weightLayers))):
-            print(f"{weight} w[{enumerate}] \n{values} v[{enumerate}]")
+            print(f"{weight} w[{index}]\n"
+                  f"{values} v[{index}]")
 
     def addLayer(self, size):
         # print(f"Size = {self.values[-1].size}")
         self.weightLayers.append(
             WeightLayer(
-                np.random.rand(size, self.values[-1].size),
+                np.random.rand(size, self.values[-1].getSize()),
                 ActivationFunctions.ReLU,
                 ActivationFunctions.ReLUDeriv))
-        self.values.append(np.zeros((1, size)))
+        self.values.append(ValueLayer(size))
         self.outputSize = size
         self.blankData()
 
@@ -56,18 +58,18 @@ class NeuralNetwork:
         difference = abs(minValue - maxValue)
         self.weightLayers.append(
             WeightLayer(
-                difference * np.random.rand(size,
-                                            self.values[-1].size) + minValue,
+                difference
+                * np.random.rand(size, self.values[-1].getSize()) + minValue,
                 ActivationFunctions.ReLU,
                 ActivationFunctions.ReLUDeriv))
-        self.values.append(np.zeros((1, size)))
+        self.values.append(ValueLayer(size))
         self.outputSize = size
         self.blankData()
 
     def refreshValues(self):
         self.values = list()
         for layer in self.weightLayers:
-            self.values.append(np.zeros((1, layer.getShape()[0])))
+            self.values.append(ValueLayer(layer.getShape()[0]))
 
     def load(self, filename):
         with open(filename, 'rb') as handle:
@@ -86,12 +88,12 @@ class NeuralNetwork:
                 f"Invalid input data size, {inputData.size} != {self.inputSize}")
             return
 
-        self.values[0] = inputData.dot(
+        self.values[0].values = inputData.dot(
             self.weightLayers[0].weights.T)  # Multiplying the input data
         for i in range(1, len(self.values)):
-            self.values[i] = self.values[i - 1].dot(
+            self.values[i].values = self.values[i - 1].values.dot(
                 self.weightLayers[i].weights.T)
-        return self.values[-1]
+        return self.values[-1].values
 
     # Same as predict, but applies activation method
     # Perhaps combine the two into a single method with a flag argument?
@@ -102,14 +104,14 @@ class NeuralNetwork:
                 f"Invalid input data size, {inputData.size} != {self.inputSize}")
             return
 
-        self.values[0] = inputData.dot(
+        self.values[0].values = inputData.dot(
             self.weightLayers[0].weights.T)  # Multiplying the input data
         for i in range(1, len(self.values)):
-            self.values[i] = self.values[i - 1].dot(
+            self.values[i].values = self.values[i - 1].values.dot(
                 self.weightLayers[i].weights.T)
-            self.values[i] = self.weightLayers[i - 1].activationMethod(
-                self.values[i])
-        return self.values[-1]
+            self.values[i].values = self.weightLayers[i - 1].activationMethod(
+                self.values[i].values)
+        return self.values[-1].values
 
     def fit(self):
         for sample in self.dataset:
@@ -118,16 +120,16 @@ class NeuralNetwork:
             print(f"delta = {delta}")
 
             # todo: Replace weight with a reference
-            # for weight in self.weights[::-1]:
+            # for weight in self.values[::-1]:
             #     wDelta = delta @ weight
             #     weight = weight - 0.05 * wDelta
             #     delta = delta @ weight
 
-            # todo: Have another look at the weights used, something's not
+            # todo: Have another look at the values used, something's not
             #  right. Weight[0] is discarded.
             for n in range(len(self.values) - 1, -1, -1):
                 if n > 0:
-                    print(f"Handling weights[{n}]")
+                    print(f"Handling values[{n}]")
                     wDelta = delta @ self.weightLayers[n].weights
                     # todo: temporary solution, replace with deriv
                     # wDelta = self.weightLayers[n].activationMethod(wDelta)
@@ -240,17 +242,17 @@ class NeuralNetwork:
         print(f"Output delta = {output_delta}")
 
         # Adjusting values
-        for i in range(len(self.weights) - 1, 0, -1):
+        for i in range(len(self.values) - 1, 0, -1):
             print(f"i = {i}")
-            if i == len(self.weights) - 1:
+            if i == len(self.values) - 1:
                 delta = output_delta
             else:
-                delta = np.dot(delta.T, self.weights[i])  # Calculating the delta of the lower layer neurons
+                delta = np.dot(delta.T, self.values[i])  # Calculating the delta of the lower layer neurons
             if i == 0:
                 weighted_delta = np.outer(delta, input)                # Calculating the final layer's delta
             else:
                 weighted_delta = np.outer(delta, self.values[i-1])  # Calculating the given layer's delta
-            self.weights[i] = self.weights[i] - 0.02 * weighted_delta        # Adjusting the weights
+            self.values[i] = self.values[i] - 0.02 * weighted_delta        # Adjusting the values
 '''
 
 # todo: File handling
