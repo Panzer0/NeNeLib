@@ -142,60 +142,61 @@ class NeuralNetwork:
     def fit_new(self):
         for sample in self.training:
             output = self.forwardPropagate(sample.input)
+            # todo: The faulty delta derivative could be the source of the problem!
             self.values[-1].delta = 2 * (output - sample.output)
             print(f"\nOutput delta = {self.values[-1].delta}")
 
             # Calculate the delta of hidden layers
             for i in range(len(self.values) - 2, -1, -1):
-                # print(f"Handling values[{i}]")
-                # print(
-                #     f"v[{i}].delta = "
-                #     f"v[{i + 1}].delta.dot(w[{i + 1}]) * v[{i}].deriv "
-                # )
-                # print(
-                #     f"v[{i}].delta =  "
-                #     f"{self.values[i + 1].delta}.dot({self.weightLayers[i + 1].weights} "
-                #     f"* {self.values[i].getAfterDeriv()}\n)"
-                # )
+                print(f"Handling values[{i}]")
+                print(
+                    f"v[{i}].delta = "
+                    f"v[{i + 1}].delta.dot(w[{i + 1}]) * v[{i}].deriv "
+                )
+                print(
+                    f"v[{i}].delta =  "
+                    f"{self.values[i + 1].delta}.dot({self.weightLayers[i + 1].weights} "
+                    f"* {self.values[i].getAfterDeriv()}\n)"
+                )
 
                 self.values[i].delta = (
-                    self.values[i + 1].delta.dot(
-                        self.weightLayers[i + 1].weights
-                    )
-                    * self.values[i].getAfterDeriv()
+                        self.values[i + 1].delta.dot(
+                            self.weightLayers[i + 1].weights
+                        )
+                        * self.values[i].getAfterDeriv()
                 )
-                # print(f"got {self.values[i].delta}\n")
+                print(f"got {self.values[i].delta}\n")
 
             # Backpropagate
             for i in range(len(self.weightLayers) - 1, -1, -1):
                 # print(f"Handling weights[{i}]")
                 if i == 0:
-                    # print(f"w[{i}] -= alpha * input.T.dot(v[{i}].delta).T")
-                    # print(
-                    #     f"{self.weightLayers[i].weights} -= {ALPHA} * {sample.input.T.dot(self.values[i].delta).T}\n"
-                    # )
+                    print(f"w[{i}] -= alpha * input.T.dot(v[{i}].delta).T")
+                    print(
+                        f"{self.weightLayers[i].weights} -= {ALPHA} * {sample.input.T.dot(self.values[i].delta).T}\n"
+                    )
 
                     # print(f"Turning 0 {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
-                        self.weightLayers[i].weights
-                        - ALPHA * sample.input.T.dot(self.values[i].delta).T
+                            self.weightLayers[i].weights
+                            - ALPHA * sample.input.T.dot(self.values[i].delta).T
                     )
-                    # print(f"got {self.weightLayers[i].weights}\n")
+                    print(f"got {self.weightLayers[i].weights}\n")
                 else:
-                    # print(f"w[{i}] -= alpha * v[{i - 1}].T.dot(v[{i}].delta).T")
-                    # print(
-                    #     f"{self.weightLayers[i].weights} -= {ALPHA} * {self.values[i - 1].values.T.dot(self.values[i].delta).T}"
-                    # )
+                    print(f"w[{i}] -= alpha * v[{i - 1}].T.dot(v[{i}].delta).T")
+                    print(
+                        f"{self.weightLayers[i].weights} -= {ALPHA} * {self.values[i - 1].values.T.dot(self.values[i].delta).T}"
+                    )
 
                     # print(f"Turning {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
-                        self.weightLayers[i].weights
-                        - ALPHA
-                        * self.values[i - 1]
-                        .values.T.dot(self.values[i].delta)
-                        .T
+                            self.weightLayers[i].weights
+                            - ALPHA
+                            * self.values[i - 1]
+                            .values.T.dot(self.values[i].delta)
+                            .T
                     )
-                    # print(f"got {self.weightLayers[i].weights}\n")
+                    print(f"got {self.weightLayers[i].weights}\n")
 
     def fit_old(self):
         for sample in self.training:
@@ -335,87 +336,87 @@ class NeuralNetwork:
 # todo: File handling
 # todo: Fix fit() for more advanced networks
 
-
-inputData = np.ones((1, int(input("Enter input data size: "))))
-firstLayerSize = int(input("Enter first layer size: "))
-network = NeuralNetwork(inputData.size, firstLayerSize)
-while True:
-    print(
-        "0 - Add quick layer\n"
-        "1 - Add custom layer\n"
-        "2 - Fit\n"
-        "3 - Display\n"
-        "4 - Predict\n"
-        "5 - Save\n"
-        "6 - Load\n"
-        "7 - Overwrite latest data\n"
-        "8 - Append new data\n"
-        "9 - Append random data\n"
-        "10- Load colour file (REQUIRES 3/4 I/O FORMAT)\n"
-        "11- Validate colours (REQUIRES 3/4 I/O FORMAT)\n"
-    )
-    operation = int(input("Choose operation: "))
-    if operation == 0:
-        network.addLayer(int(input("Enter layer size: ")))
-    if operation == 1:
-        network.addLayer(
-            int(input("Enter layer size: ")),
-            int(input("Enter min weight value: ")),
-            int(input("Enter max weight value: ")),
+if __name__ == '__main__':
+    inputData = np.ones((1, int(input("Enter input data size: "))))
+    firstLayerSize = int(input("Enter first layer size: "))
+    network = NeuralNetwork(inputData.size, firstLayerSize)
+    while True:
+        print(
+            "0 - Add quick layer\n"
+            "1 - Add custom layer\n"
+            "2 - Fit\n"
+            "3 - Display\n"
+            "4 - Predict\n"
+            "5 - Save\n"
+            "6 - Load\n"
+            "7 - Overwrite latest data\n"
+            "8 - Append new data\n"
+            "9 - Append random data\n"
+            "10- Load colour file (REQUIRES 3/4 I/O FORMAT)\n"
+            "11- Validate colours (REQUIRES 3/4 I/O FORMAT)\n"
         )
-    if operation == 2:
-        if network.hasData(network.training):
-            count = int(input("How many times? "))
-            for i in range(count):
-                network.fit_new()
-                print("\n")
-        else:
-            print("No data available")
-    if operation == 3:
-        network.display()
-    if operation == 4:
-        choice = int(input("Training (0) or testing (1) data? "))
-        target = network.training if choice == 0 else network.testing
+        operation = int(input("Choose operation: "))
+        if operation == 0:
+            network.addLayer(int(input("Enter layer size: ")))
+        if operation == 1:
+            network.addLayer(
+                int(input("Enter layer size: ")),
+                int(input("Enter min weight value: ")),
+                int(input("Enter max weight value: ")),
+            )
+        if operation == 2:
+            if network.hasData(network.training):
+                count = int(input("How many times? "))
+                for i in range(count):
+                    network.fit_new()
+                    print("\n")
+            else:
+                print("No data available")
+        if operation == 3:
+            network.display()
+        if operation == 4:
+            choice = int(input("Training (0) or testing (1) data? "))
+            target = network.training if choice == 0 else network.testing
 
-        if network.hasData(target):
-            for sample in target:
-                print(network.forwardPropagate(sample.input))
-        else:
-            print("No data available")
-    if operation == 5:
-        network.save("data.pickle")
-    if operation == 6:
-        network.load("data.pickle")
-    if operation == 7:
-        choice = int(input("Training (0) or testing (1) data? "))
-        target = network.training if choice == 0 else network.testing
+            if network.hasData(target):
+                for sample in target:
+                    print(network.forwardPropagate(sample.input))
+            else:
+                print("No data available")
+        if operation == 5:
+            network.save("data.pickle")
+        if operation == 6:
+            network.load("data.pickle")
+        if operation == 7:
+            choice = int(input("Training (0) or testing (1) data? "))
+            target = network.training if choice == 0 else network.testing
 
-        if network.hasData(target):
-            network.updateLatestDataManual(target)
+            if network.hasData(target):
+                network.updateLatestDataManual(target)
+                network.displayDataset(target)
+            else:
+                print("No data available")
+        if operation == 8:
+            choice = int(input("Training (0) or testing (1) data? "))
+            target = network.training if choice == 0 else network.testing
+
+            network.addSampleManual(target)
             network.displayDataset(target)
-        else:
-            print("No data available")
-    if operation == 8:
-        choice = int(input("Training (0) or testing (1) data? "))
-        target = network.training if choice == 0 else network.testing
+        if operation == 9:
+            choice = int(input("Training (0) or testing (1) data? "))
+            target = network.training if choice == 0 else network.testing
 
-        network.addSampleManual(target)
-        network.displayDataset(target)
-    if operation == 9:
-        choice = int(input("Training (0) or testing (1) data? "))
-        target = network.training if choice == 0 else network.testing
+            network.addSampleRandom(target)
+            network.displayDataset(target)
+        if operation == 10:
+            choice = int(input("Training (0) or testing (1) data? "))
+            target = network.training if choice == 0 else network.testing
 
-        network.addSampleRandom(target)
-        network.displayDataset(target)
-    if operation == 10:
-        choice = int(input("Training (0) or testing (1) data?"))
-        target = network.training if choice == 0 else network.testing
+            network.loadColourFile(str(input("Enter file name: ")), target)
+        if operation == 11:
+            choice = int(input("Training (0) or testing (1) data? "))
+            target = network.training if choice == 0 else network.testing
 
-        network.loadColourFile(str(input("Enter file name: ")), target)
-    if operation == 11:
-        choice = int(input("Training (0) or testing (1) data? "))
-        target = network.training if choice == 0 else network.testing
-
-        print(f"{network.validateColours(target)}%")
-    if operation == 12:
-        network.setWeights(int(input("Enter weight layer index: ")))
+            print(f"{network.validateColours(target)}%")
+        if operation == 12:
+            network.setWeights(int(input("Enter weight layer index: ")))
