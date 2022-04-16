@@ -47,9 +47,13 @@ class NeuralNetwork:
         for weight, values, index in zip(
             self.weightLayers, self.values, range(len(self.weightLayers))
         ):
-            print(f"{weight} w[{index}]\n" f"{values} v[{index}]")
+            print(
+                f"{weight} w[{index}]\n"
+                f"{values} v[{index}] ({values.activationMethod.__name__})"
+            )
 
     def addLayer(self, size, minValue=0, maxValue=1):
+        # Append a new weight layer with values in the defined range
         difference = abs(minValue - maxValue)
         self.weightLayers.append(
             WeightLayer(
@@ -57,16 +61,19 @@ class NeuralNetwork:
                 + minValue
             )
         )
-        self.values.append(
-            ValueLayer(
-                size, ActivationFunctions.ReLU, ActivationFunctions.ReLUDeriv
-            )
+        # Set the former output layer's method to ReLU
+        self.values[-1].setMethod(
+            ActivationFunctions.ReLU, ActivationFunctions.ReLUDeriv
         )
+        # Append a new output value layer with no activation method
+        self.values.append(ValueLayer(size))
         self.outputSize = size
+        # Remove old data, which might no longer be suitable for the new shape
         self.blankData()
 
     def refreshValues(self):
         self.values = list()
+        # Generate empty value layers
         for layer in self.weightLayers:
             self.values.append(
                 ValueLayer(
@@ -75,6 +82,8 @@ class NeuralNetwork:
                     ActivationFunctions.ReLUDeriv,
                 )
             )
+        # Remove the final layer's activation method
+        self.values[-1].setMethod()
 
     def load(self, filename):
         with open(filename, "rb") as handle:
@@ -82,9 +91,8 @@ class NeuralNetwork:
         self.refreshValues()
         self.training.clear()
         self.testing.clear()
-        self.inputSize = self.weightLayers[0].getShape()[0]
-        self.inputSize = self.values[-1].values.size
-        print(f"Input = {self.inputSize}, output = {self.outputSize}")
+        self.inputSize = self.weightLayers[0].getShape()[1]
+        self.outputSize = self.values[-1].values.size
 
     def save(self, filename):
         with open(filename, "wb") as handle:
@@ -134,47 +142,60 @@ class NeuralNetwork:
     def fit_new(self):
         for sample in self.training:
             output = self.forwardPropagate(sample.input)
-            self.values[-1].delta = sample.output - output
+            self.values[-1].delta = 2 * (output - sample.output)
             print(f"\nOutput delta = {self.values[-1].delta}")
 
             # Calculate the delta of hidden layers
             for i in range(len(self.values) - 2, -1, -1):
                 # print(f"Handling values[{i}]")
-                print(
-                    f"v[{i}].delta = "
-                    f"v[{i + 1}].delta.dot(w[{i + 1}]) * v[{i}].deriv "
-                )
+                # print(
+                #     f"v[{i}].delta = "
+                #     f"v[{i + 1}].delta.dot(w[{i + 1}]) * v[{i}].deriv "
+                # )
+                # print(
+                #     f"v[{i}].delta =  "
+                #     f"{self.values[i + 1].delta}.dot({self.weightLayers[i + 1].weights} "
+                #     f"* {self.values[i].getAfterDeriv()}\n)"
+                # )
+
                 self.values[i].delta = (
                     self.values[i + 1].delta.dot(
                         self.weightLayers[i + 1].weights
                     )
                     * self.values[i].getAfterDeriv()
                 )
+                # print(f"got {self.values[i].delta}\n")
 
             # Backpropagate
             for i in range(len(self.weightLayers) - 1, -1, -1):
                 # print(f"Handling weights[{i}]")
                 if i == 0:
-                    print(f"w[{i}] += alpha * input.T.dot(v[{i}].delta).T")
+                    # print(f"w[{i}] -= alpha * input.T.dot(v[{i}].delta).T")
+                    # print(
+                    #     f"{self.weightLayers[i].weights} -= {ALPHA} * {sample.input.T.dot(self.values[i].delta).T}\n"
+                    # )
 
                     # print(f"Turning 0 {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
                         self.weightLayers[i].weights
-                        + ALPHA * sample.input.T.dot(self.values[i].delta).T
+                        - ALPHA * sample.input.T.dot(self.values[i].delta).T
                     )
-                    # print(f"into {self.weightLayers[i].weights}")
+                    # print(f"got {self.weightLayers[i].weights}\n")
                 else:
-                    print(f"w[{i}] += alpha * v[{i - 1}].T.dot(v[{i}].delta).T")
+                    # print(f"w[{i}] -= alpha * v[{i - 1}].T.dot(v[{i}].delta).T")
+                    # print(
+                    #     f"{self.weightLayers[i].weights} -= {ALPHA} * {self.values[i - 1].values.T.dot(self.values[i].delta).T}"
+                    # )
 
                     # print(f"Turning {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
                         self.weightLayers[i].weights
-                        + ALPHA
+                        - ALPHA
                         * self.values[i - 1]
                         .values.T.dot(self.values[i].delta)
                         .T
                     )
-                    # print(f"into {self.weightLayers[i].weights}")
+                    # print(f"got {self.weightLayers[i].weights}\n")
 
     def fit_old(self):
         for sample in self.training:
@@ -305,7 +326,7 @@ class NeuralNetwork:
     def setWeights(self, index):
         self.weightLayers[index].weights = np.array(
             [
-                [float(input("Enter weight value")) for weight in row]
+                [float(input("Enter weight value: ")) for weight in row]
                 for row in self.weightLayers[index].weights
             ]
         )
@@ -353,7 +374,7 @@ while True:
     if operation == 3:
         network.display()
     if operation == 4:
-        choice = int(input("Training (0) or testing (1) data?"))
+        choice = int(input("Training (0) or testing (1) data? "))
         target = network.training if choice == 0 else network.testing
 
         if network.hasData(target):
@@ -366,7 +387,7 @@ while True:
     if operation == 6:
         network.load("data.pickle")
     if operation == 7:
-        choice = int(input("Training (0) or testing (1) data?"))
+        choice = int(input("Training (0) or testing (1) data? "))
         target = network.training if choice == 0 else network.testing
 
         if network.hasData(target):
@@ -375,13 +396,13 @@ while True:
         else:
             print("No data available")
     if operation == 8:
-        choice = int(input("Training (0) or testing (1) data?"))
+        choice = int(input("Training (0) or testing (1) data? "))
         target = network.training if choice == 0 else network.testing
 
         network.addSampleManual(target)
         network.displayDataset(target)
     if operation == 9:
-        choice = int(input("Training (0) or testing (1) data?"))
+        choice = int(input("Training (0) or testing (1) data? "))
         target = network.training if choice == 0 else network.testing
 
         network.addSampleRandom(target)
@@ -392,9 +413,9 @@ while True:
 
         network.loadColourFile(str(input("Enter file name: ")), target)
     if operation == 11:
-        choice = int(input("Training (0) or testing (1) data?"))
+        choice = int(input("Training (0) or testing (1) data? "))
         target = network.training if choice == 0 else network.testing
 
         print(f"{network.validateColours(target)}%")
     if operation == 12:
-        network.setWeights(int(input("Enter weight layer index")))
+        network.setWeights(int(input("Enter weight layer index: ")))
