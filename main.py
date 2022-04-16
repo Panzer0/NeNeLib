@@ -226,7 +226,10 @@ class NeuralNetwork:
 
     def addSampleManual(self, target):
         target.append(
-            Data(np.ones((1, self.inputSize)), np.ones((1, self.outputSize)),)
+            Data(
+                np.ones((1, self.inputSize)),
+                np.ones((1, self.outputSize)),
+            )
         )
         network.updateLatestDataManual(self.training)
 
@@ -309,6 +312,11 @@ class NeuralNetwork:
 
     def activationMethodTest(self):
         self.values[0].applyMethod()
+
+    def setWeights(self, index):
+        self.weightLayers[index].weights = np.array([
+            [float(input("Enter weight value")) for weight in row] for row in self.weightLayers[index].weights
+        ])
 
 
 # todo: File handling
@@ -396,3 +404,5 @@ while True:
         target = network.training if choice == 0 else network.testing
 
         print(f"{network.validateColours(target)}%")
+    if operation == 12:
+        network.setWeights(int(input("Enter weight layer index")))
