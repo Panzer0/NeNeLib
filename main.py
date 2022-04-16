@@ -160,10 +160,10 @@ class NeuralNetwork:
                 )
 
                 self.values[i].delta = (
-                        self.values[i + 1].delta.dot(
-                            self.weightLayers[i + 1].weights
-                        )
-                        * self.values[i].getAfterDeriv()
+                    self.values[i + 1].delta.dot(
+                        self.weightLayers[i + 1].weights
+                    )
+                    * self.values[i].getAfterDeriv()
                 )
                 print(f"got {self.values[i].delta}\n")
 
@@ -178,8 +178,8 @@ class NeuralNetwork:
 
                     # print(f"Turning 0 {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
-                            self.weightLayers[i].weights
-                            - ALPHA * sample.input.T.dot(self.values[i].delta).T
+                        self.weightLayers[i].weights
+                        - ALPHA * sample.input.T.dot(self.values[i].delta).T
                     )
                     print(f"got {self.weightLayers[i].weights}\n")
                 else:
@@ -190,11 +190,11 @@ class NeuralNetwork:
 
                     # print(f"Turning {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
-                            self.weightLayers[i].weights
-                            - ALPHA
-                            * self.values[i - 1]
-                            .values.T.dot(self.values[i].delta)
-                            .T
+                        self.weightLayers[i].weights
+                        - ALPHA
+                        * self.values[i - 1]
+                        .values.T.dot(self.values[i].delta)
+                        .T
                     )
                     print(f"got {self.weightLayers[i].weights}\n")
 
@@ -336,7 +336,7 @@ class NeuralNetwork:
 # todo: File handling
 # todo: Fix fit() for more advanced networks
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     inputData = np.ones((1, int(input("Enter input data size: "))))
     firstLayerSize = int(input("Enter first layer size: "))
     network = NeuralNetwork(inputData.size, firstLayerSize)
