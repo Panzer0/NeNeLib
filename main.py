@@ -7,7 +7,7 @@ from NetworkStructure.Data import Data
 from NetworkStructure.ValueLayer import ValueLayer
 from NetworkStructure.WeightLayer import WeightLayer
 
-ALPHA = 0.05
+ALPHA = 0.01
 
 
 class NeuralNetwork:
@@ -29,7 +29,6 @@ class NeuralNetwork:
                 ActivationFunctions.ReLUDeriv,
             )
         )
-
         self.blankData()
 
     def isEmpty(self) -> bool:
@@ -40,8 +39,6 @@ class NeuralNetwork:
 
     def blankData(self):
         self.training.clear()
-        # self.dataset.append(
-        #     Data(np.ones((1, self.inputSize)), np.ones((1, self.outputSize))))
 
     def getOutputLayer(self):
         return self.values[-1]
@@ -52,20 +49,7 @@ class NeuralNetwork:
         ):
             print(f"{weight} w[{index}]\n" f"{values} v[{index}]")
 
-    def addLayer(self, size):
-        # print(f"Size = {self.values[-1].size}")
-        self.weightLayers.append(
-            WeightLayer(np.random.rand(size, self.values[-1].getSize()))
-        )
-        self.values.append(
-            ValueLayer(
-                size, ActivationFunctions.ReLU, ActivationFunctions.ReLUDeriv
-            )
-        )
-        self.outputSize = size
-        self.blankData()
-
-    def addLayerRange(self, size, minValue, maxValue):
+    def addLayer(self, size, minValue=0, maxValue=1):
         difference = abs(minValue - maxValue)
         self.weightLayers.append(
             WeightLayer(
@@ -96,6 +80,11 @@ class NeuralNetwork:
         with open(filename, "rb") as handle:
             self.weightLayers = pickle.load(handle)
         self.refreshValues()
+        self.training.clear()
+        self.testing.clear()
+        self.inputSize = self.weightLayers[0].getShape()[0]
+        self.inputSize = self.values[-1].values.size
+        print(f"Input = {self.inputSize}, output = {self.outputSize}")
 
     def save(self, filename):
         with open(filename, "wb") as handle:
@@ -187,7 +176,7 @@ class NeuralNetwork:
                     )
                     # print(f"into {self.weightLayers[i].weights}")
 
-    def fit(self):
+    def fit_old(self):
         for sample in self.training:
             output = self.forwardPropagate(sample.input)
             delta = output - sample.output
@@ -296,7 +285,7 @@ class NeuralNetwork:
         correct = 0
         for sample in target:
             total += 1
-            result = self.predict(sample.input)
+            result = self.forwardPropagate(sample.input)
             print(result)
             print(sample.output[0])
             print(f"Argmax = {np.argmax(result[0])}")
@@ -314,9 +303,12 @@ class NeuralNetwork:
         self.values[0].applyMethod()
 
     def setWeights(self, index):
-        self.weightLayers[index].weights = np.array([
-            [float(input("Enter weight value")) for weight in row] for row in self.weightLayers[index].weights
-        ])
+        self.weightLayers[index].weights = np.array(
+            [
+                [float(input("Enter weight value")) for weight in row]
+                for row in self.weightLayers[index].weights
+            ]
+        )
 
 
 # todo: File handling
@@ -345,7 +337,7 @@ while True:
     if operation == 0:
         network.addLayer(int(input("Enter layer size: ")))
     if operation == 1:
-        network.addLayerRange(
+        network.addLayer(
             int(input("Enter layer size: ")),
             int(input("Enter min weight value: ")),
             int(input("Enter max weight value: ")),
@@ -366,7 +358,7 @@ while True:
 
         if network.hasData(target):
             for sample in target:
-                print(network.predict(sample.input))
+                print(network.forwardPropagate(sample.input))
         else:
             print("No data available")
     if operation == 5:

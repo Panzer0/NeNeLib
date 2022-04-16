@@ -19,11 +19,16 @@ class ValueLayer:
     def getSize(self):
         return self.values.size
 
+    def setMethod(self, activationMethod, activationMethodDeriv):
+        self.activationMethod = activationMethod
+        self.activationMethodDeriv = activationMethodDeriv
+
+
+
     def __str__(self):
         return str(self.values)
 
     def applyMethod(self):
         self.values = self.activationMethod(self.values)
-
     def getAfterDeriv(self):
         return [self.activationMethodDeriv(value) for value in self.values[0]]
