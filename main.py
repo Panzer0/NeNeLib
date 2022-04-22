@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 
 import ActivationFunctions
+from MNISTHandler import MNISTHandler
 from NetworkStructure.Data import Data
 from NetworkStructure.ValueLayer import ValueLayer
 from NetworkStructure.WeightLayer import WeightLayer
@@ -332,6 +333,15 @@ class NeuralNetwork:
             ]
         )
 
+    def load_MNIST(self):
+        # todo: Validate data size
+        handler = MNISTHandler()
+        self.training = handler.getTrainInput()
+        self. = handler.getTrainOutput()
+
+        self.testing = handler.getTestInput()
+        self. = handler.getTestOutput()
+
 
 # todo: File handling
 # todo: Fix fit() for more advanced networks
@@ -373,6 +383,7 @@ if __name__ == "__main__":
             else:
                 print("No data available")
         if operation == 3:
+            network.displayDataset(network.training)
             network.display()
         if operation == 4:
             choice = int(input("Training (0) or testing (1) data? "))
