@@ -243,7 +243,7 @@ class NeuralNetwork:
                 np.ones((1, self.outputSize)),
             )
         )
-        network.updateLatestDataManual(self.training)
+        network.updateLatestDataManual(target)
 
     def addSampleRandom(self, target):
         target.append(
@@ -333,14 +333,12 @@ class NeuralNetwork:
             ]
         )
 
+    # Overwrites the train and test data with MNIST
     def load_MNIST(self):
         # todo: Validate data size
         handler = MNISTHandler()
-        self.training = handler.getTrainInput()
-        self. = handler.getTrainOutput()
-
-        self.testing = handler.getTestInput()
-        self. = handler.getTestOutput()
+        self.training = Data(handler.getTrainInput(), handler.getTrainOutput())
+        self.testing = Data(handler.getTestInput(), handler.getTestOutput())
 
 
 # todo: File handling
@@ -364,6 +362,7 @@ if __name__ == "__main__":
             "9 - Append random data\n"
             "10- Load colour file (REQUIRES 3/4 I/O FORMAT)\n"
             "11- Validate colours (REQUIRES 3/4 I/O FORMAT)\n"
+            "12- Set weights\n"
         )
         operation = int(input("Choose operation: "))
         if operation == 0:

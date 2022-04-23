@@ -1,4 +1,5 @@
 import tensorflow
+import numpy as np
 
 
 class MNISTHandler:
@@ -16,17 +17,21 @@ class MNISTHandler:
         return self.adjustInput(self.train_input)
 
     def getTrainOutput(self):
-        # todo: Adjust for neural network output
-        return self.train_output
+        output = np.zeros((len(self.train_output), 10))
+        for i, label in enumerate(self.train_output):
+            output[i][label] = 1
+        return output
 
     def getTestInput(self):
         return self.adjustInput(self.train_input)
 
     def getTestOutput(self):
-        # todo: Adjust for neural network output
-        return self.train_output
+        output = np.zeros((len(self.test_output), 10))
+        for i, label in enumerate(self.train_output):
+            output[i][label] = 1
+        return output
 
 
 handler = MNISTHandler()
 input = handler.getTrainInput()
-print(input[10])
+handler.getTrainOutput()
