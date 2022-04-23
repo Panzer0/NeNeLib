@@ -149,16 +149,16 @@ class NeuralNetwork:
 
             # Calculate the delta of hidden layers
             for i in range(len(self.values) - 2, -1, -1):
-                print(f"Handling values[{i}]")
-                print(
-                    f"v[{i}].delta = "
-                    f"v[{i + 1}].delta.dot(w[{i + 1}]) * v[{i}].deriv "
-                )
-                print(
-                    f"v[{i}].delta =  "
-                    f"{self.values[i + 1].delta}.dot({self.weightLayers[i + 1].weights} "
-                    f"* {self.values[i].getAfterDeriv()}\n)"
-                )
+                # print(f"Handling values[{i}]")
+                # print(
+                #     f"v[{i}].delta = "
+                #     f"v[{i + 1}].delta.dot(w[{i + 1}]) * v[{i}].deriv "
+                # )
+                # print(
+                #     f"v[{i}].delta =  "
+                #     f"{self.values[i + 1].delta}.dot({self.weightLayers[i + 1].weights} "
+                #     f"* {self.values[i].getAfterDeriv()}\n)"
+                # )
 
                 self.values[i].delta = (
                     self.values[i + 1].delta.dot(
@@ -166,28 +166,28 @@ class NeuralNetwork:
                     )
                     * self.values[i].getAfterDeriv()
                 )
-                print(f"got {self.values[i].delta}\n")
+                # print(f"got {self.values[i].delta}\n")
 
             # Backpropagate
             for i in range(len(self.weightLayers) - 1, -1, -1):
                 # print(f"Handling weights[{i}]")
                 if i == 0:
-                    print(f"w[{i}] -= alpha * input.T.dot(v[{i}].delta).T")
-                    print(
-                        f"{self.weightLayers[i].weights} -= {ALPHA} * {sample.input.T.dot(self.values[i].delta).T}\n"
-                    )
+                    # print(f"w[{i}] -= alpha * input.T.dot(v[{i}].delta).T")
+                    # print(
+                    #     f"{self.weightLayers[i].weights} -= {ALPHA} * {sample.input.T.dot(self.values[i].delta).T}\n"
+                    # )
 
                     # print(f"Turning 0 {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
                         self.weightLayers[i].weights
                         - ALPHA * sample.input.T.dot(self.values[i].delta).T
                     )
-                    print(f"got {self.weightLayers[i].weights}\n")
+                    # print(f"got {self.weightLayers[i].weights}\n")
                 else:
-                    print(f"w[{i}] -= alpha * v[{i - 1}].T.dot(v[{i}].delta).T")
-                    print(
-                        f"{self.weightLayers[i].weights} -= {ALPHA} * {self.values[i - 1].values.T.dot(self.values[i].delta).T}"
-                    )
+                    # print(f"w[{i}] -= alpha * v[{i - 1}].T.dot(v[{i}].delta).T")
+                    # print(
+                    #     f"{self.weightLayers[i].weights} -= {ALPHA} * {self.values[i - 1].values.T.dot(self.values[i].delta).T}"
+                    # )
 
                     # print(f"Turning {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
@@ -197,7 +197,7 @@ class NeuralNetwork:
                         .values.T.dot(self.values[i].delta)
                         .T
                     )
-                    print(f"got {self.weightLayers[i].weights}\n")
+                    # print(f"got {self.weightLayers[i].weights}\n")
 
     def fit_old(self):
         for sample in self.training:
@@ -254,9 +254,9 @@ class NeuralNetwork:
         )
 
     def displayDataset(self, target):
-        for data in target:
-            print(f"Input:{data.input[0]}")
-            print(f"Output:{data.output[0]}\n")
+        print(target[0])
+        # for data in target:
+        #     print(data)
 
     def addSampleColour(
         self, r: float, g: float, b: float, colour: int, target
@@ -337,8 +337,13 @@ class NeuralNetwork:
     def load_MNIST(self):
         # todo: Validate data size
         handler = MNISTHandler()
-        self.training = Data(handler.getTrainInput(), handler.getTrainOutput())
-        self.testing = Data(handler.getTestInput(), handler.getTestOutput())
+        self.training.clear()
+        for input, output in zip(handler.getTrainInput(), handler.getTrainOutput()):
+            self.training.append(Data(input, output))
+
+        self.testing.clear()
+        for input, output in zip(handler.getTestInput(), handler.getTestOutput()):
+            self.testing.append(Data(input, output))
 
 
 # todo: File handling
@@ -430,3 +435,5 @@ if __name__ == "__main__":
             print(f"{network.validateColours(target)}%")
         if operation == 12:
             network.setWeights(int(input("Enter weight layer index: ")))
+        if operation == 13:
+            network.load_MNIST()

@@ -23,15 +23,16 @@ class MNISTHandler:
         return output
 
     def getTestInput(self):
-        return self.adjustInput(self.train_input)
+        return self.adjustInput(self.test_input)
 
     def getTestOutput(self):
         output = np.zeros((len(self.test_output), 10))
-        for i, label in enumerate(self.train_output):
+        for i, label in enumerate(self.test_output):
             output[i][label] = 1
         return output
 
 
 handler = MNISTHandler()
 input = handler.getTrainInput()
-handler.getTrainOutput()
+output = handler.getTrainOutput()
+print(output[1])
