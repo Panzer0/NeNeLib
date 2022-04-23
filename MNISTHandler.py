@@ -11,15 +11,15 @@ class MNISTHandler:
         ) = mnist.load_data()
 
     def adjustInput(self, array):
-        return [x.flatten() for x in array]
+        return [np.array([x.flatten()]) for x in array]
 
     def getTrainInput(self):
         return self.adjustInput(self.train_input)
 
     def getTrainOutput(self):
-        output = np.zeros((len(self.train_output), 10))
+        output = np.zeros((len(self.train_output), 1, 10))
         for i, label in enumerate(self.train_output):
-            output[i][label] = 1
+            output[i][0][label] = 1
         return output
 
     def getTestInput(self):
@@ -32,7 +32,3 @@ class MNISTHandler:
         return output
 
 
-handler = MNISTHandler()
-input = handler.getTrainInput()
-output = handler.getTrainOutput()
-print(output[1])

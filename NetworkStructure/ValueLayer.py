@@ -35,5 +35,4 @@ class ValueLayer:
         self.values = self.activationMethod(self.values)
 
     def getAfterDeriv(self):
-        print(f"Self.values[0] = {self.values}")
         return [self.activationMethodDeriv(value) for value in self.values[0]]
