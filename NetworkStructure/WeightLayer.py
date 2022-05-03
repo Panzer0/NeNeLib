@@ -1,6 +1,3 @@
-import ActivationFunctions
-
-
 # todo: Remove Activation method from uses of weightLayer()
 class WeightLayer:
     def __init__(self, weights):

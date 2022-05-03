@@ -12,7 +12,7 @@ class MNISTHandler:
 
     def adjustInput(self, array):
         out = [np.array([x.flatten()]) for x in array]
-        return [x/255 for x in out]
+        return [x / 255 for x in out]
 
     def getTrainInput(self):
         return self.adjustInput(self.train_input)
@@ -27,9 +27,7 @@ class MNISTHandler:
         return self.adjustInput(self.test_input)
 
     def getTestOutput(self):
-        output = np.zeros((len(self.test_output), 10))
+        output = np.zeros((len(self.test_output), 1, 10))
         for i, label in enumerate(self.test_output):
-            output[i][label] = 1
+            output[i][0][label] = 1
         return output
-
-

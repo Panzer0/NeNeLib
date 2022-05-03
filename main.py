@@ -2,7 +2,8 @@ import pickle
 
 import numpy as np
 
-import ActivationFunctions
+import ActivationFunctions.ReLU
+import ActivationFunctions.NoFunction
 from MNISTHandler import MNISTHandler
 from NetworkStructure.Data import Data
 from NetworkStructure.ValueLayer import ValueLayer
@@ -21,17 +22,10 @@ class NeuralNetwork:
         self.outputSize = firstLayerSize
 
         self.weightLayers.append(
-            WeightLayer(
-                0.2 * np.random.rand(firstLayerSize, inputSize)
-                - 0.1
-            )
+            WeightLayer(0.2 * np.random.rand(firstLayerSize, inputSize) - 0.1)
         )
         self.values.append(
-            ValueLayer(
-                firstLayerSize,
-                ActivationFunctions.ReLU,
-                ActivationFunctions.ReLUDeriv,
-            )
+            ValueLayer(firstLayerSize, ActivationFunctions.ReLU.ReLU)
         )
         self.blankData()
 
@@ -53,7 +47,7 @@ class NeuralNetwork:
         ):
             print(
                 f"{weight} w[{index}]\n"
-                f"{values} v[{index}] ({values.activationMethod.__name__})"
+                f"{values} v[{index}] ({values.activationFunction.__name__})"
             )
 
     def addLayer(self, size, minValue=-0.1, maxValue=0.1):
@@ -67,7 +61,7 @@ class NeuralNetwork:
         )
         # Set the former output layer's method to ReLU
         self.values[-1].setMethod(
-            ActivationFunctions.ReLU, ActivationFunctions.ReLUDeriv
+            ActivationFunctions.ReLU.ReLU
         )
         # Append a new output value layer with no activation method
         self.values.append(ValueLayer(size))
@@ -80,11 +74,7 @@ class NeuralNetwork:
         # Generate empty value layers
         for layer in self.weightLayers:
             self.values.append(
-                ValueLayer(
-                    layer.getShape()[0],
-                    ActivationFunctions.ReLU,
-                    ActivationFunctions.ReLUDeriv,
-                )
+                ValueLayer(layer.getShape()[0], ActivationFunctions.ReLU.ReLU)
             )
         # Remove the final layer's activation method
         self.values[-1].setMethod()
@@ -147,7 +137,9 @@ class NeuralNetwork:
         for sample in self.training:
             output = self.forwardPropagate(sample.input)
             # todo: The faulty delta derivative could be the source of the problem!
-            self.values[-1].delta = 2 / self.outputSize * (output - sample.output)
+            self.values[-1].delta = (
+                2 / self.outputSize * (output - sample.output)
+            )
             # print(f"\nOutput delta = {self.values[-1].delta}")
 
             # Calculate the delta of hidden layers
@@ -221,7 +213,7 @@ class NeuralNetwork:
                     print(f"Handling values[{n}]")
                     wDelta = delta @ self.weightLayers[n].weights
                     # todo: temporary solution, replace with deriv
-                    # wDelta = self.weightLayers[n].activationMethod(wDelta)
+                    # wDelta = self.weightLayers[n].activationFunction(wDelta)
                 else:
 
                     wDelta = delta.T @ sample.input
@@ -310,12 +302,12 @@ class NeuralNetwork:
         for sample in target:
             total += 1
             result = self.forwardPropagate(sample.input)
-            print(result)
-            print(sample.output[0])
-            print(f"Argmax = {np.argmax(result[0])}")
+            # print(result)
+            # print(sample.output[0])
+            # print(f"Argmax = {np.argmax(result[0])}")
 
             if np.argmax(result[0]) == np.argmax(sample.output[0]):
-                print("Correct!\n")
+                # print("Correct!\n")
                 correct += 1
             else:
                 print(
@@ -339,11 +331,15 @@ class NeuralNetwork:
         # todo: Validate data size
         handler = MNISTHandler()
         self.training.clear()
-        for input, output in zip(handler.getTrainInput(), handler.getTrainOutput()):
+        for input, output in zip(
+            handler.getTrainInput(), handler.getTrainOutput()
+        ):
             self.training.append(Data(input, output))
 
         self.testing.clear()
-        for input, output in zip(handler.getTestInput(), handler.getTestOutput()):
+        for input, output in zip(
+            handler.getTestInput(), handler.getTestOutput()
+        ):
             self.testing.append(Data(input, output))
 
     def singleOutData(self, target):
@@ -372,8 +368,9 @@ if __name__ == "__main__":
             "8 - Append new data\n"
             "9 - Append random data\n"
             "10- Load colour file (REQUIRES 3/4 I/O FORMAT)\n"
-            "11- Validate colours (REQUIRES 3/4 I/O FORMAT)\n"
+            "11- Validate colours\n"
             "12- Set weights\n"
+            "13- Load MNIST\n"
         )
         operation = int(input("Choose operation: "))
         if operation == 0:
