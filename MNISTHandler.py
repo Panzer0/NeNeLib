@@ -11,7 +11,8 @@ class MNISTHandler:
         ) = mnist.load_data()
 
     def adjustInput(self, array):
-        return [np.array([x.flatten()]) for x in array]
+        out = [np.array([x.flatten()]) for x in array]
+        return [x/255 for x in out]
 
     def getTrainInput(self):
         return self.adjustInput(self.train_input)

@@ -21,7 +21,10 @@ class NeuralNetwork:
         self.outputSize = firstLayerSize
 
         self.weightLayers.append(
-            WeightLayer(np.random.rand(firstLayerSize, inputSize))
+            WeightLayer(
+                0.2 * np.random.rand(firstLayerSize, inputSize)
+                - 0.1
+            )
         )
         self.values.append(
             ValueLayer(
@@ -53,7 +56,7 @@ class NeuralNetwork:
                 f"{values} v[{index}] ({values.activationMethod.__name__})"
             )
 
-    def addLayer(self, size, minValue=0, maxValue=1):
+    def addLayer(self, size, minValue=-0.1, maxValue=0.1):
         # Append a new weight layer with values in the defined range
         difference = abs(minValue - maxValue)
         self.weightLayers.append(
@@ -144,8 +147,8 @@ class NeuralNetwork:
         for sample in self.training:
             output = self.forwardPropagate(sample.input)
             # todo: The faulty delta derivative could be the source of the problem!
-            self.values[-1].delta = 2 * (output - sample.output)
-            print(f"\nOutput delta = {self.values[-1].delta}")
+            self.values[-1].delta = 2 / self.outputSize * (output - sample.output)
+            # print(f"\nOutput delta = {self.values[-1].delta}")
 
             # Calculate the delta of hidden layers
             for i in range(len(self.values) - 2, -1, -1):
@@ -255,8 +258,6 @@ class NeuralNetwork:
 
     def displayDataset(self, target):
         print(target[0])
-        # for data in target:
-        #     print(data)
 
     def addSampleColour(
         self, r: float, g: float, b: float, colour: int, target
@@ -344,6 +345,11 @@ class NeuralNetwork:
         self.testing.clear()
         for input, output in zip(handler.getTestInput(), handler.getTestOutput()):
             self.testing.append(Data(input, output))
+
+    def singleOutData(self, target):
+        temp = target[0]
+        target.clear()
+        target.append(temp)
 
 
 # todo: File handling
