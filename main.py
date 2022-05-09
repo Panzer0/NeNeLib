@@ -347,7 +347,6 @@ class NeuralNetwork:
         target.clear()
         target.append(temp)
 
-
 # todo: File handling
 # todo: Fix fit() for more advanced networks
 
