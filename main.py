@@ -14,6 +14,9 @@ ALPHA = 0.01
 
 DEFAULT_FUNCTION = ActivationFunctions.Sigmoid.Sigmoid
 
+# Pre-defined strings
+TRAIN_OR_TEST_MESS = "Training (0) or testing (1) data? "
+NO_DATA_MESS = "No data available "
 
 class NeuralNetwork:
     def __init__(self, inputSize, firstLayerSize):
@@ -352,51 +355,51 @@ if __name__ == "__main__":
                     network.fit_new()
                     print("\n")
             else:
-                print("No data available")
+                print(NO_DATA_MESS)
         elif operation == 3:
             network.displayDataset(network.training)
             network.display()
         elif operation == 4:
-            choice = int(input("Training (0) or testing (1) data? "))
+            choice = int(input(TRAIN_OR_TEST_MESS))
             target = network.training if choice == 0 else network.testing
 
             if network.hasData(target):
                 for sample in target:
                     print(network.forwardPropagate(sample.input))
             else:
-                print("No data available")
+                print(NO_DATA_MESS)
         elif operation == 5:
             network.save("data.pickle")
         elif operation == 6:
             network.load("data.pickle")
         elif operation == 7:
-            choice = int(input("Training (0) or testing (1) data? "))
+            choice = int(input(TRAIN_OR_TEST_MESS))
             target = network.training if choice == 0 else network.testing
 
             if network.hasData(target):
                 network.updateLatestDataManual(target)
                 network.displayDataset(target)
             else:
-                print("No data available")
+                print(NO_DATA_MESS)
         elif operation == 8:
-            choice = int(input("Training (0) or testing (1) data? "))
+            choice = int(input(TRAIN_OR_TEST_MESS))
             target = network.training if choice == 0 else network.testing
 
             network.addSampleManual(target)
             network.displayDataset(target)
         elif operation == 9:
-            choice = int(input("Training (0) or testing (1) data? "))
+            choice = int(input(TRAIN_OR_TEST_MESS))
             target = network.training if choice == 0 else network.testing
 
             network.addSampleRandom(target)
             network.displayDataset(target)
         elif operation == 10:
-            choice = int(input("Training (0) or testing (1) data? "))
+            choice = int(input(TRAIN_OR_TEST_MESS))
             target = network.training if choice == 0 else network.testing
 
             network.loadColourFile(str(input("Enter file name: ")), target)
         elif operation == 11:
-            choice = int(input("Training (0) or testing (1) data? "))
+            choice = int(input(TRAIN_OR_TEST_MESS))
             target = network.training if choice == 0 else network.testing
 
             print(f"{network.validateMultiClass(target)}%")
