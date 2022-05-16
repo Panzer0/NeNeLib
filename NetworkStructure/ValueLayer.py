@@ -1,6 +1,9 @@
 import numpy as np
 
+import ActivationFunctions.Sigmoid
 from ActivationFunctions.NoFunction import NoFunction
+from ActivationFunctions.ReLU import ReLU
+from ActivationFunctions.Sigmoid import Sigmoid
 
 
 class ValueLayer:
@@ -18,7 +21,7 @@ class ValueLayer:
         # res /= probability
         # print(res)
 
-    def getMaskedLayer(self):
+    def getMasked(self):
         return np.multiply(self.values, self.mask)
 
     def getSize(self):
@@ -34,7 +37,16 @@ class ValueLayer:
         self.values = self.activationFunction.function(self.values)
 
     def getAfterDeriv(self):
-        return [
-            self.activationFunction.derivative(value)
-            for value in self.values[0]
-        ]
+        return self.activationFunction.derivative(self.values)
+
+
+#
+# layer = ValueLayer(10, NoFunction)
+# layer.values[0][4] = 3
+# layer.values[0][3] = -3
+# layer.values[0][2] = 8
+# layer.values[0][1] = 5
+# print(layer)
+# layer.applyMethod()
+# print(layer)
+# print(layer.getAfterDeriv())

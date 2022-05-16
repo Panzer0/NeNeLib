@@ -7,5 +7,5 @@ class ReLU:
         return np.maximum(0, x)
 
     @staticmethod
-    def derivative(x):
-        return 1 if x > 0 else 0
+    def derivative(layer):
+        return [[int(value > 0) for value in layer[0]]]

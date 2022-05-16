@@ -4,5 +4,5 @@ class NoFunction:
         return x
 
     @staticmethod
-    def derivative(x):
-        return 1
+    def derivative(layer):
+        return [[1 for _ in layer[0]]]
