@@ -5,20 +5,19 @@ from ActivationFunctions.ReLU import ReLU
 from ActivationFunctions.Sigmoid import Sigmoid
 
 
-class ValueLayer:
-    def __init__(self, size, activationFunction=NoFunction, dropoutOdds=1.0):
-        self.values = np.zeros((1, size))
-        self.mask = np.ones((1, size))
-        self.delta = np.zeros((1, size))
+class ValueLayerBatch:
+    def __init__(self, batchSize, layerSize, activationFunction=NoFunction,
+                 dropoutOdds=1.0):
+        self.values = np.zeros((batchSize, layerSize))
+        self.mask = np.ones((batchSize, layerSize))
+        self.delta = np.zeros((batchSize, layerSize))
         self.activationFunction = activationFunction
 
+        self.batchSize = batchSize
         self.dropoutOdds = dropoutOdds
 
     def generateMask(self, probability: float) -> None:
-        self.mask = np.random.rand(1, self.mask.size) < probability
-        # res = np.multiply(weights, binary_value)
-        # res /= probability
-        # print(res)
+        self.mask = np.random.rand(self.batchSize, self.getSize()) < probability
 
     def applyDropout(self):
         self.applyMask()
@@ -33,13 +32,13 @@ class ValueLayer:
         self.values = np.multiply(self.values, self.mask)
 
     def applyMaskToDelta(self):
-       self.delta = np.multiply(self.delta, self.mask)
+        self.delta = np.multiply(self.delta, self.mask)
 
     def adjustForDropout(self):
         self.values = np.multiply(self.values, 1 / self.dropoutOdds)
 
     def getSize(self):
-        return self.values.size
+        return self.values.shape[1]
 
     def setMethod(self, activationFunction=NoFunction):
         self.activationFunction = activationFunction
@@ -54,14 +53,20 @@ class ValueLayer:
         return self.activationFunction.derivative(self.values)
 
 
-# layer = ValueLayerBatch(10, NoFunction, 0.5)
-# layer.values[0][4] = 3
-# layer.values[0][3] = -3
-# layer.values[0][2] = 8
-# layer.values[0][1] = 5
-# print("Layer: " + str(layer))
-# layer.applyMethod()
-# print("Layer after activation method: " + str(layer))
-# layer.applyDropout()
-# print("Mask: " + str(layer.mask))
-# print("Layer after dropout: " + str(layer))
+layer = ValueLayerBatch(2, 5, ReLU, 0.5)
+layer.values[0][0] = 5
+layer.values[0][1] = 5
+layer.values[0][2] = 8
+layer.values[0][3] = -3
+layer.values[0][4] = 3
+layer.values[1][0] = 65
+layer.values[1][1] = -9
+layer.values[1][2] = 0
+layer.values[1][3] = 999
+layer.values[1][4] = 0
+print("Layer: \n" + str(layer))
+layer.applyMethod()
+print("Layer after activation method: \n" + str(layer))
+layer.applyDropoutNewMask()
+print("Mask: \n" + str(layer.mask))
+print("Layer after dropout: \n" + str(layer))
