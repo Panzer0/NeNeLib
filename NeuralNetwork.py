@@ -10,8 +10,8 @@ from NetworkStructure.ValueLayer import ValueLayer
 from NetworkStructure.WeightLayer import WeightLayer
 
 ALPHA = 0.01
-TRAINING_SIZE = 1000
-TEST_SIZE = 10000
+TRAINING_SIZE = None
+TEST_SIZE = None
 
 DEFAULT_FUNCTION = ActivationFunctions.ReLU.ReLU
 
@@ -73,6 +73,8 @@ class NeuralNetwork:
         # Remove old data, which might no longer be suitable for the new shape
         self.blankData()
 
+
+
     def refreshValues(self):
         self.values = list()
         # Generate empty value layers
@@ -102,7 +104,7 @@ class NeuralNetwork:
         # Invalid input handling
         if inputData.size != self.inputSize:
             print(
-                f"Invalid input data layerSize, {inputData.size} != {self.inputSize}"
+                f"Invalid input data size, {inputData.size} != {self.inputSize}"
             )
             return
 
@@ -121,11 +123,9 @@ class NeuralNetwork:
         # Invalid input handling
         if inputData.size != self.inputSize:
             print(
-                f"Invalid input data layerSize, {inputData.size} != {self.inputSize}"
+                f"Invalid input data size, {inputData.size} != {self.inputSize}"
             )
             return
-
-        # print(f"{inputBatch}.dot({self.weightLayers[0].weights.T}")
 
         self.values[0].values = inputData.dot(self.weightLayers[0].weights.T)
         # Multiplying the input data
@@ -139,27 +139,6 @@ class NeuralNetwork:
             self.values[i].applyDropoutNewMask()
         return self.values[-1].values
 
-    def forwardPropagateBatch(self, inputBatch):
-        # Invalid input handling
-        if inputBatch.size != self.inputSize:
-            print(
-                f"Invalid input data layerSize, {inputBatch.size} != {self.inputSize}"
-            )
-            return
-
-        # print(f"{inputBatch}.dot({self.weightLayers[0].weights.T}")
-
-        self.values[0].values = inputBatch.dot(self.weightLayers[0].weights.T)
-        # Multiplying the input data
-        self.values[0].applyMethod()
-        self.values[0].applyDropoutNewMask()
-        for i in range(1, len(self.values)):
-            self.values[i].values = self.values[i - 1].values.dot(
-                self.weightLayers[i].weights.T
-            )
-            self.values[i].applyMethod()
-            self.values[i].applyDropoutNewMask()
-        return self.values[-1].values
 
     def fit(self):
         for sample in self.training:
@@ -193,39 +172,6 @@ class NeuralNetwork:
                             .values.T.dot(self.values[i].delta)
                             .T
                     )
-
-    def fitBatch(self, batchSize):
-        # todo: Add iteration over multiple batches
-        trainingBatch = self.training[0:batchSize]
-        output = self.forwardPropagate(sample.input)
-        self.values[-1].delta = (
-                2 / self.outputSize * (output - sample.output)
-        )
-
-        # Calculate the delta of hidden layers
-        for i in range(len(self.values) - 2, -1, -1):
-            self.values[i].delta = (
-                    self.values[i + 1].delta.dot(
-                        self.weightLayers[i + 1].weights
-                    )
-                    * self.values[i].getAfterDeriv()
-            )
-            self.values[i].applyMaskToDelta()
-
-        # Backpropagate
-        for i in range(len(self.weightLayers) - 1, -1, -1):
-            if i == 0:
-                self.weightLayers[i].weights = (
-                        self.weightLayers[i].weights
-                        - ALPHA * sample.input.T.dot(self.values[i].delta).T
-                )
-            else:
-                self.weightLayers[i].weights = (
-                        self.weightLayers[i].weights
-                        - ALPHA
-                        * self.values[i - 1]
-                        .values.T.dot(self.values[i].delta).T
-                )
 
     def updateLatestDataManual(self, target):
         for i in range(len(target[-1].input[0])):
@@ -333,19 +279,19 @@ class NeuralNetwork:
 
     # Overwrites the train and test data with MNIST
     def load_MNIST(self):
-        # todo: Validate data layerSize
+        # todo: Validate data size
         handler = MNISTHandler()
         self.training.clear()
         for input, output in zip(
-                handler.getTrainInput(TEST_SIZE),
-                handler.getTrainOutput(TEST_SIZE)
+                handler.getTrainInput(TRAINING_SIZE),
+                handler.getTrainOutput(TRAINING_SIZE)
         ):
             self.training.append(Data(input, output))
 
         self.testing.clear()
         for input, output in zip(
-                handler.getTestInput(TRAINING_SIZE),
-                handler.getTestOutput(TRAINING_SIZE)
+                handler.getTestInput(TEST_SIZE),
+                handler.getTestOutput(TEST_SIZE)
         ):
             self.testing.append(Data(input, output))
 
@@ -356,8 +302,8 @@ class NeuralNetwork:
 
 
 if __name__ == "__main__":
-    inputData = np.ones((1, int(input("Enter input data layerSize: "))))
-    firstLayerSize = int(input("Enter first layer layerSize: "))
+    inputData = np.ones((1, int(input("Enter input data size: "))))
+    firstLayerSize = int(input("Enter first layer size: "))
     network = NeuralNetwork(inputData.size, firstLayerSize)
     while True:
         print(
@@ -378,10 +324,10 @@ if __name__ == "__main__":
         )
         operation = int(input("Choose operation: "))
         if operation == 0:
-            network.addLayer(int(input("Enter layer layerSize: ")))
+            network.addLayer(int(input("Enter layer size: ")))
         elif operation == 1:
             network.addLayer(
-                int(input("Enter layer layerSize: ")),
+                int(input("Enter layer size: ")),
                 int(input("Enter min weight value: ")),
                 int(input("Enter max weight value: ")),
             )
