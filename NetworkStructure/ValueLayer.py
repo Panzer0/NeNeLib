@@ -13,7 +13,6 @@ class ValueLayer:
         self.activationFunction = activationFunction
 
         self.dropoutOdds = dropoutOdds
-        self.generateMask(self.dropoutOdds)
 
     def generateMask(self, probability: float) -> None:
         self.mask = np.random.rand(1, self.mask.size) < probability
@@ -23,12 +22,20 @@ class ValueLayer:
 
     def applyDropout(self):
         self.applyMask()
-        self.adjustValues()
+        self.adjustForDropout()
+
+    def applyDropoutNewMask(self):
+        self.generateMask(self.dropoutOdds)
+        self.applyMask()
+        self.adjustForDropout()
 
     def applyMask(self):
         self.values = np.multiply(self.values, self.mask)
 
-    def adjustValues(self):
+    def applyMaskToDelta(self):
+       self.delta = np.multiply(self.delta, self.mask)
+
+    def adjustForDropout(self):
         self.values = np.multiply(self.values, 1 / self.dropoutOdds)
 
     def getSize(self):

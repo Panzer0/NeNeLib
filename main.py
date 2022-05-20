@@ -12,11 +12,12 @@ from NetworkStructure.WeightLayer import WeightLayer
 
 ALPHA = 0.01
 
-DEFAULT_FUNCTION = ActivationFunctions.Sigmoid.Sigmoid
+DEFAULT_FUNCTION = ActivationFunctions.ReLU.ReLU
 
 # Pre-defined strings
 TRAIN_OR_TEST_MESS = "Training (0) or testing (1) data? "
 NO_DATA_MESS = "No data available "
+
 
 class NeuralNetwork:
     def __init__(self, inputSize, firstLayerSize):
@@ -47,7 +48,7 @@ class NeuralNetwork:
 
     def display(self):
         for weight, values, index in zip(
-                self.weightLayers, self.values, range(len(self.weightLayers))
+            self.weightLayers, self.values, range(len(self.weightLayers))
         ):
             print(
                 f"{weight} w[{index}]\n"
@@ -124,22 +125,24 @@ class NeuralNetwork:
             return
 
         # print(f"{inputData}.dot({self.weightLayers[0].weights.T}")
-        self.values[0].values = inputData.dot(
-            self.weightLayers[0].weights.T
-        )  # Multiplying the input data
+
+        self.values[0].values = inputData.dot(self.weightLayers[0].weights.T)
+        # Multiplying the input data
         self.values[0].applyMethod()
+        self.values[0].applyDropoutNewMask()
         for i in range(1, len(self.values)):
             self.values[i].values = self.values[i - 1].values.dot(
                 self.weightLayers[i].weights.T
             )
             self.values[i].applyMethod()
+            self.values[i].applyDropoutNewMask()
         return self.values[-1].values
 
     def fit_new(self):
         for sample in self.training:
             output = self.forwardPropagate(sample.input)
             self.values[-1].delta = (
-                    2 / self.outputSize * (output - sample.output)
+                2 / self.outputSize * (output - sample.output)
             )
             # print(f"\nOutput delta = {self.values[-1].delta}")
 
@@ -157,11 +160,12 @@ class NeuralNetwork:
                 # )
 
                 self.values[i].delta = (
-                        self.values[i + 1].delta.dot(
-                            self.weightLayers[i + 1].weights
-                        )
-                        * self.values[i].getAfterDeriv()
+                    self.values[i + 1].delta.dot(
+                        self.weightLayers[i + 1].weights
+                    )
+                    * self.values[i].getAfterDeriv()
                 )
+                self.values[i].applyMaskToDelta()
                 # print(f"got {self.values[i].delta}\n")
 
             # Backpropagate
@@ -175,8 +179,8 @@ class NeuralNetwork:
 
                     # print(f"Turning 0 {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
-                            self.weightLayers[i].weights
-                            - ALPHA * sample.input.T.dot(self.values[i].delta).T
+                        self.weightLayers[i].weights
+                        - ALPHA * sample.input.T.dot(self.values[i].delta).T
                     )
                     # print(f"got {self.weightLayers[i].weights}\n")
                 else:
@@ -187,11 +191,11 @@ class NeuralNetwork:
 
                     # print(f"Turning {self.weightLayers[i].weights}")
                     self.weightLayers[i].weights = (
-                            self.weightLayers[i].weights
-                            - ALPHA
-                            * self.values[i - 1]
-                            .values.T.dot(self.values[i].delta)
-                            .T
+                        self.weightLayers[i].weights
+                        - ALPHA
+                        * self.values[i - 1]
+                        .values.T.dot(self.values[i].delta)
+                        .T
                     )
                     # print(f"got {self.weightLayers[i].weights}\n")
 
@@ -206,7 +210,10 @@ class NeuralNetwork:
 
     def addSampleManual(self, target):
         target.append(
-            Data(np.ones((1, self.inputSize)), np.ones((1, self.outputSize)), )
+            Data(
+                np.ones((1, self.inputSize)),
+                np.ones((1, self.outputSize)),
+            )
         )
         network.updateLatestDataManual(target)
 
@@ -222,7 +229,7 @@ class NeuralNetwork:
         print(target[0])
 
     def addSampleColour(
-            self, r: float, g: float, b: float, colour: int, target
+        self, r: float, g: float, b: float, colour: int, target
     ):
         target.append(
             Data(
@@ -302,13 +309,13 @@ class NeuralNetwork:
         handler = MNISTHandler()
         self.training.clear()
         for input, output in zip(
-                handler.getTrainInput(), handler.getTrainOutput()
+            handler.getTrainInput(), handler.getTrainOutput()
         ):
             self.training.append(Data(input, output))
 
         self.testing.clear()
         for input, output in zip(
-                handler.getTestInput(), handler.getTestOutput()
+            handler.getTestInput(), handler.getTestOutput()
         ):
             self.testing.append(Data(input, output))
 
