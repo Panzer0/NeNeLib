@@ -2,12 +2,19 @@ import numpy as np
 
 from ActivationFunctions.NoFunction import NoFunction
 from ActivationFunctions.ReLU import ReLU
+from ActivationFunctions.SoftMax import SoftMax
 from ActivationFunctions.Sigmoid import Sigmoid
+from ActivationFunctions.HyperbolicTangent import HyperbolicTangent
 
 
 class ValueLayerBatch:
-    def __init__(self, batchSize, layerSize, activationFunction=NoFunction,
-                 dropoutOdds=1.0):
+    def __init__(
+        self,
+        batchSize,
+        layerSize,
+        activationFunction=NoFunction,
+        dropoutOdds=1.0,
+    ):
         self.values = np.zeros((batchSize, layerSize))
         self.mask = np.ones((batchSize, layerSize))
         self.delta = np.zeros((batchSize, layerSize))
@@ -53,7 +60,7 @@ class ValueLayerBatch:
         return self.activationFunction.derivative(self.values)
 
 
-# layer = ValueLayerBatch(2, 5, ReLU, 0.5)
+# layer = ValueLayerBatch(2, 5, SoftMax, 0.5)
 # layer.values[0][0] = 5
 # layer.values[0][1] = 5
 # layer.values[0][2] = 8
@@ -62,11 +69,13 @@ class ValueLayerBatch:
 # layer.values[1][0] = 65
 # layer.values[1][1] = -9
 # layer.values[1][2] = 0
-# layer.values[1][3] = 999
-# layer.values[1][4] = 0
+# layer.values[1][3] = 90
+# layer.values[1][4] = 3
 # print("Layer: \n" + str(layer))
 # layer.applyMethod()
 # print("Layer after activation method: \n" + str(layer))
+# print(f"Layer's derivative: \n{str(layer.getAfterDeriv())}")
+# print(f"Sums: {sum(layer.values[0]), sum(layer.values[1])}")
 # layer.applyDropoutNewMask()
 # print("Mask: \n" + str(layer.mask))
 # print("Layer after dropout: \n" + str(layer))

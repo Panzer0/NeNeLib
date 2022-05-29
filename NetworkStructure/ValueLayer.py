@@ -33,7 +33,7 @@ class ValueLayer:
         self.values = np.multiply(self.values, self.mask)
 
     def applyMaskToDelta(self):
-       self.delta = np.multiply(self.delta, self.mask)
+        self.delta = np.multiply(self.delta, self.mask)
 
     def adjustForDropout(self):
         self.values = np.multiply(self.values, 1 / self.dropoutOdds)
@@ -54,7 +54,7 @@ class ValueLayer:
         return self.activationFunction.derivative(self.values)
 
 
-# layer = ValueLayerBatch(10, NoFunction, 0.5)
+# layer = ValueLayer(10, NoFunction, 0.5)
 # layer.values[0][4] = 3
 # layer.values[0][3] = -3
 # layer.values[0][2] = 8
@@ -62,6 +62,6 @@ class ValueLayer:
 # print("Layer: " + str(layer))
 # layer.applyMethod()
 # print("Layer after activation method: " + str(layer))
-# layer.applyDropout()
+# layer.applyDropoutNewMask()
 # print("Mask: " + str(layer.mask))
 # print("Layer after dropout: " + str(layer))
