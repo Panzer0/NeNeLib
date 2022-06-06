@@ -12,7 +12,7 @@ from NetworkStructure.DataBatch import Data
 from NetworkStructure.ValueLayerBatch import ValueLayerBatch
 from NetworkStructure.WeightLayer import WeightLayer
 
-ALPHA = 0.02
+ALPHA = 0.1
 TRAINING_SIZE = 60_000
 TEST_SIZE = 10_000
 
@@ -21,8 +21,8 @@ BATCH_SIZE = 100
 DEFAULT_FUNCTION = ActivationFunctions.ReLU.ReLU
 OUTPUT_FUNCTION = ActivationFunctions.SoftMax.SoftMax
 
-WEIGHT_RANGE_LOWER = -0.01
-WEIGHT_RANGE_UPPER = 0.01
+WEIGHT_RANGE_LOWER = -0.1
+WEIGHT_RANGE_UPPER = 0.1
 
 # Pre-defined strings
 TRAIN_OR_TEST_MESS = "Training (0) or testing (1) data? "
@@ -150,7 +150,7 @@ class NeuralNetwork:
             self.values[-1].delta = (
                 2 / self.outputSize * (output - batch.output)
             )
-            print(f"delta = {self.values[-1].delta}")
+            # print(f"delta = {self.values[-1].delta}")
             if self.values[-1].activationFunction.__name__ == "SoftMax":
                 self.values[-1].delta /= batch.output.shape[0]
 
@@ -261,10 +261,10 @@ class NeuralNetwork:
                 if np.argmax(result) == np.argmax(sample):
                     # print("Correct!\n")
                     correct += 1
-                else:
-                    print(
-                        f"WRONG!, {np.argmax(result)} != {np.argmax(sample)}\n"
-                    )
+                # else:
+                #     print(
+                #         f"WRONG!, {np.argmax(result)} != {np.argmax(sample)}\n"
+                #     )
         return float(correct / total * 100)
 
     def activationMethodTest(self):
@@ -351,7 +351,9 @@ if __name__ == "__main__":
                 count = int(input("How many times? "))
                 for i in range(count):
                     network.fit()
-                    print("\n")
+                    print(
+                        f"{i}: {network.validateMultiClass(network.training)}%"
+                    )
             else:
                 print(NO_DATA_MESS)
         elif operation == 3:
