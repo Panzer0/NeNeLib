@@ -4,18 +4,25 @@ import numpy as np
 
 import ActivationFunctions.ReLU
 import ActivationFunctions.Sigmoid
+from ActivationFunctions.SoftMax import SoftMax
+from ActivationFunctions.HyperbolicTangent import HyperbolicTangent
+from ActivationFunctions.NoFunction import NoFunction
 from MNISTHandler import MNISTHandler
 from NetworkStructure.DataBatch import Data
 from NetworkStructure.ValueLayerBatch import ValueLayerBatch
 from NetworkStructure.WeightLayer import WeightLayer
 
-ALPHA = 0.01
+ALPHA = 0.1
 TRAINING_SIZE = 60_000
 TEST_SIZE = 10_000
 
-BATCH_SIZE = 50
+BATCH_SIZE = 100
 
 DEFAULT_FUNCTION = ActivationFunctions.ReLU.ReLU
+OUTPUT_FUNCTION = ActivationFunctions.SoftMax.SoftMax
+
+WEIGHT_RANGE_LOWER = -0.1
+WEIGHT_RANGE_UPPER = 0.1
 
 # Pre-defined strings
 TRAIN_OR_TEST_MESS = "Training (0) or testing (1) data? "
@@ -32,10 +39,14 @@ class NeuralNetwork:
         self.outputSize = firstLayerSize
 
         self.weightLayers.append(
-            WeightLayer(0.2 * np.random.rand(firstLayerSize, inputSize) - 0.1)
+            WeightLayer(
+                abs(WEIGHT_RANGE_UPPER - WEIGHT_RANGE_LOWER)
+                * np.random.rand(firstLayerSize, inputSize)
+                + WEIGHT_RANGE_LOWER
+            )
         )
         self.values.append(
-            ValueLayerBatch(BATCH_SIZE, firstLayerSize, DEFAULT_FUNCTION)
+            ValueLayerBatch(BATCH_SIZE, firstLayerSize, OUTPUT_FUNCTION)
         )
         self.blankData()
 
@@ -60,7 +71,13 @@ class NeuralNetwork:
                 f"{values} v[{index}] ({values.activationFunction.__name__})"
             )
 
-    def addLayer(self, batchSize, size, minValue=-0.1, maxValue=0.1):
+    def addLayer(
+        self,
+        batchSize,
+        size,
+        minValue=WEIGHT_RANGE_LOWER,
+        maxValue=WEIGHT_RANGE_UPPER,
+    ):
         # Append a new weight layer with values in the defined range
         difference = abs(minValue - maxValue)
         self.weightLayers.append(
@@ -72,7 +89,7 @@ class NeuralNetwork:
         # Set the former output layer's method to the default function
         self.values[-1].setMethod(DEFAULT_FUNCTION)
         # Append a new output value layer with no activation method
-        self.values.append(ValueLayerBatch(batchSize, size))
+        self.values.append(ValueLayerBatch(batchSize, size, OUTPUT_FUNCTION))
         self.outputSize = size
         # Remove old data, which might no longer be suitable for the new shape
         self.blankData()
@@ -126,18 +143,25 @@ class NeuralNetwork:
             self.values[i].applyDropoutNewMask()
         return self.values[-1].values
 
-    def fit(self, batchSize=BATCH_SIZE):
+    def fit(self):
         # todo: Add iteration over multiple batches
         for batch in self.training:
             output = self.forwardPropagate(batch.input)
-            self.values[-1].delta = 2 / self.outputSize * (output - batch.output)
+            self.values[-1].delta = (
+                2 / self.outputSize * (output - batch.output)
+            )
+            # print(f"delta = {self.values[-1].delta}")
+            if self.values[-1].activationFunction.__name__ == "SoftMax":
+                self.values[-1].delta /= batch.output.shape[0]
 
             # Calculate the delta of hidden layers
             for i in range(len(self.values) - 2, -1, -1):
-                self.values[i].delta = (
-                    self.values[i + 1].delta.dot(self.weightLayers[i + 1].weights)
+                self.values[i].delta = self.values[i + 1].delta.dot(
+                    self.weightLayers[i + 1].weights
                 )
-                self.values[i].delta = self.values[i].delta * self.values[i].getAfterDeriv()
+                self.values[i].delta = (
+                    self.values[i].delta * self.values[i].getAfterDeriv()
+                )
                 self.values[i].applyMaskToDelta()
 
             # Backpropagate
@@ -151,7 +175,9 @@ class NeuralNetwork:
                     self.weightLayers[i].weights = (
                         self.weightLayers[i].weights
                         - ALPHA
-                        * self.values[i - 1].values.T.dot(self.values[i].delta).T
+                        * self.values[i - 1]
+                        .values.T.dot(self.values[i].delta)
+                        .T
                     )
 
     def updateLatestDataManual(self, target):
@@ -165,10 +191,7 @@ class NeuralNetwork:
 
     def addSampleManual(self, target):
         target.append(
-            Data(
-                np.ones((1, self.inputSize)),
-                np.ones((1, self.outputSize)),
-            )
+            Data(np.ones((1, self.inputSize)), np.ones((1, self.outputSize)),)
         )
         network.updateLatestDataManual(target)
 
@@ -238,10 +261,10 @@ class NeuralNetwork:
                 if np.argmax(result) == np.argmax(sample):
                     # print("Correct!\n")
                     correct += 1
-                else:
-                    print(
-                        f"WRONG!, {np.argmax(result)} != {np.argmax(sample)}\n"
-                    )
+                # else:
+                #     print(
+                #         f"WRONG!, {np.argmax(result)} != {np.argmax(sample)}\n"
+                #     )
         return float(correct / total * 100)
 
     def activationMethodTest(self):
@@ -250,7 +273,7 @@ class NeuralNetwork:
     def setWeights(self, index):
         self.weightLayers[index].weights = np.array(
             [
-                [float(input("Enter weight value: ")) for weight in row]
+                [float(input("Enter weight value: ")) for _ in row]
                 for row in self.weightLayers[index].weights
             ]
         )
@@ -263,24 +286,28 @@ class NeuralNetwork:
         self.training.clear()
         tempInput = handler.getTrainInput(TRAINING_SIZE)
         tempOutput = handler.getTrainOutput(TRAINING_SIZE)
-        self.training = np.squeeze([
-            Data(tempInput[low:high], tempOutput[low:high])
-            for low, high in zip(
-                range(0, TRAINING_SIZE - BATCH_SIZE + 1, BATCH_SIZE),
-                range(BATCH_SIZE, TRAINING_SIZE + 1, BATCH_SIZE),
-            )
-        ])
+        self.training = np.squeeze(
+            [
+                Data(tempInput[low:high], tempOutput[low:high])
+                for low, high in zip(
+                    range(0, TRAINING_SIZE - BATCH_SIZE + 1, BATCH_SIZE),
+                    range(BATCH_SIZE, TRAINING_SIZE + 1, BATCH_SIZE),
+                )
+            ]
+        )
 
         self.testing.clear()
         tempInput = handler.getTrainInput(TEST_SIZE)
         tempOutput = handler.getTrainOutput(TEST_SIZE)
-        self.testing = np.squeeze([
-            Data(tempInput[low:high], tempOutput[low:high])
-            for low, high in zip(
-                range(0, TEST_SIZE - BATCH_SIZE + 1, BATCH_SIZE),
-                range(BATCH_SIZE, TEST_SIZE + 1, BATCH_SIZE),
-            )
-        ])
+        self.testing = np.squeeze(
+            [
+                Data(tempInput[low:high], tempOutput[low:high])
+                for low, high in zip(
+                    range(0, TEST_SIZE - BATCH_SIZE + 1, BATCH_SIZE),
+                    range(BATCH_SIZE, TEST_SIZE + 1, BATCH_SIZE),
+                )
+            ]
+        )
 
     def singleOutData(self, target):
         temp = target[0]
@@ -324,7 +351,9 @@ if __name__ == "__main__":
                 count = int(input("How many times? "))
                 for i in range(count):
                     network.fit()
-                    print("\n")
+                    print(
+                        f"{i}: {network.validateMultiClass(network.training)}%"
+                    )
             else:
                 print(NO_DATA_MESS)
         elif operation == 3:
