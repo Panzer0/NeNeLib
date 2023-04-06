@@ -285,8 +285,8 @@ class NeuralNetwork:
         handler = MNISTHandler()
 
         self.training.clear()
-        tempInput = handler.getTrainInput(TRAINING_SIZE)
-        tempOutput = handler.getTrainOutput(TRAINING_SIZE)
+        tempInput = handler.get_train_input(TRAINING_SIZE)
+        tempOutput = handler.get_train_output(TRAINING_SIZE)
         self.training = np.squeeze(
             [
                 Data(tempInput[low:high], tempOutput[low:high])
@@ -298,8 +298,8 @@ class NeuralNetwork:
         )
 
         self.testing.clear()
-        tempInput = handler.getTrainInput(TEST_SIZE)
-        tempOutput = handler.getTrainOutput(TEST_SIZE)
+        tempInput = handler.get_train_input(TEST_SIZE)
+        tempOutput = handler.get_train_output(TEST_SIZE)
         self.testing = np.squeeze(
             [
                 Data(tempInput[low:high], tempOutput[low:high])

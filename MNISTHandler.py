@@ -13,19 +13,19 @@ class MNISTHandler:
             (self.test_input, self.test_output),
         ) = mnist.load_data()
 
-    def getAdjustedInput(self, array):
+    def get_adjusted_input(self, array):
         return array.reshape(array.shape[0], -1) / 255
 
-    def getTrainInput(self, amount=None):
+    def get_train_input(self, amount=None):
         if amount and amount > MAX_TRAIN_SIZE:
             print(
                 f"Insufficient data to fulfil request! {amount} > {MAX_TRAIN_SIZE}"
             )
             amount = MAX_TRAIN_SIZE
-        adjusted_input = self.getAdjustedInput(self.train_input)
+        adjusted_input = self.get_adjusted_input(self.train_input)
         return adjusted_input[0:amount] if amount else adjusted_input
 
-    def getTrainOutput(self, amount=None):
+    def get_train_output(self, amount=None):
         if amount and amount > MAX_TRAIN_SIZE:
             print(
                 f"Insufficient data to fulfil request! {amount} > {MAX_TRAIN_SIZE}"
@@ -36,16 +36,16 @@ class MNISTHandler:
             output[i][0][label] = 1
         return output[0:amount] if amount else output
 
-    def getTestInput(self, amount=None):
+    def get_test_input(self, amount=None):
         if amount and amount > MAX_TEST_SIZE:
             print(
                 f"Insufficient data to fulfil request! {amount} > {MAX_TEST_SIZE}"
             )
             amount = MAX_TEST_SIZE
-        adjusted_input = self.getAdjustedInput(self.test_input)
+        adjusted_input = self.get_adjusted_input(self.test_input)
         return adjusted_input[0:amount] if amount else adjusted_input
 
-    def getTestOutput(self, amount=None):
+    def get_test_output(self, amount=None):
         if amount and amount > MAX_TEST_SIZE:
             print(
                 f"Insufficient data to fulfil request! {amount} > {MAX_TEST_SIZE}"
