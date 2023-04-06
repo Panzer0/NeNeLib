@@ -23,7 +23,7 @@ class MNISTHandler:
             )
             amount = MAX_TRAIN_SIZE
         adjusted_input = self.get_adjusted_input(self.train_input)
-        return adjusted_input[0:amount] if amount else adjusted_input
+        return adjusted_input[:amount] if amount else adjusted_input
 
     def get_train_output(self, amount=None):
         if amount and amount > MAX_TRAIN_SIZE:
@@ -34,7 +34,7 @@ class MNISTHandler:
         output = np.zeros((len(self.train_output), 1, 10))
         for i, label in enumerate(self.train_output):
             output[i][0][label] = 1
-        return output[0:amount] if amount else output
+        return output[:amount] if amount else output
 
     def get_test_input(self, amount=None):
         if amount and amount > MAX_TEST_SIZE:
@@ -43,7 +43,7 @@ class MNISTHandler:
             )
             amount = MAX_TEST_SIZE
         adjusted_input = self.get_adjusted_input(self.test_input)
-        return adjusted_input[0:amount] if amount else adjusted_input
+        return adjusted_input[:amount] if amount else adjusted_input
 
     def get_test_output(self, amount=None):
         if amount and amount > MAX_TEST_SIZE:
@@ -54,4 +54,4 @@ class MNISTHandler:
         output = np.zeros((len(self.test_output), 1, 10))
         for i, label in enumerate(self.test_output):
             output[i][0][label] = 1
-        return output[0:amount] if amount else output
+        return output[:amount] if amount else output
