@@ -1,4 +1,4 @@
-import tensorflow
+import tensorflow as tf
 import numpy as np
 
 MAX_TRAIN_SIZE = 60000
@@ -7,15 +7,14 @@ MAX_TEST_SIZE = 10000
 
 class MNISTHandler:
     def __init__(self):
-        mnist = tensorflow.keras.datasets.mnist
+        mnist = tf.keras.datasets.mnist
         (
             (self.train_input, self.train_output),
             (self.test_input, self.test_output),
         ) = mnist.load_data()
 
     def getAdjustedInput(self, array):
-        out = [np.array([x.flatten()]) for x in array]
-        return np.array([x / 255 for x in out])
+        return array.reshape(array.shape[0], -1) / 255
 
     def getTrainInput(self, amount=None):
         if amount and amount > MAX_TRAIN_SIZE:
@@ -23,8 +22,8 @@ class MNISTHandler:
                 f"Insufficient data to fulfil request! {amount} > {MAX_TRAIN_SIZE}"
             )
             amount = MAX_TRAIN_SIZE
-        retVal = self.getAdjustedInput(self.train_input)
-        return retVal[0:amount] if amount else retVal
+        adjusted_input = self.getAdjustedInput(self.train_input)
+        return adjusted_input[0:amount] if amount else adjusted_input
 
     def getTrainOutput(self, amount=None):
         if amount and amount > MAX_TRAIN_SIZE:
@@ -43,8 +42,8 @@ class MNISTHandler:
                 f"Insufficient data to fulfil request! {amount} > {MAX_TEST_SIZE}"
             )
             amount = MAX_TEST_SIZE
-        retval = self.getAdjustedInput(self.test_input)
-        return retval[0:amount] if amount else retval
+        adjusted_input = self.getAdjustedInput(self.test_input)
+        return adjusted_input[0:amount] if amount else adjusted_input
 
     def getTestOutput(self, amount=None):
         if amount and amount > MAX_TEST_SIZE:

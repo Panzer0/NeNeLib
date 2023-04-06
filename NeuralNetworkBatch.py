@@ -216,6 +216,7 @@ class NeuralNetwork:
             )
         )
 
+        print(f"Val = {target[-1].input[0][0]}")
         target[-1].input[0][0] = r
         target[-1].input[0][1] = g
         target[-1].input[0][2] = b
@@ -335,7 +336,7 @@ if __name__ == "__main__":
             "10- Load colour file (REQUIRES 3/4 I/O FORMAT)\n"
             "11- Validate multi-class\n"
             "12- Set weights\n"
-            "13- Load MNIST\n"
+            "13- Load MNIST (REQUIRES 784/10 I/O FORMAT)\n"
         )
         operation = int(input("Choose operation: "))
         if operation == 0:
