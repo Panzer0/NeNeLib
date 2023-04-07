@@ -66,11 +66,17 @@ class NeuralNetwork:
         for i, (w, v) in enumerate(zip(self.weightLayers, self.values)):
             print(f"{w} w[{i}]\n{v} v[{i}] ({v.activationFunction.__name__})")
 
-    def add_layer(self, batchSize, size, minValue=WEIGHT_RANGE_LOWER,
-                  maxValue=WEIGHT_RANGE_UPPER):
+    def add_layer(
+        self,
+        batchSize,
+        size,
+        minValue=WEIGHT_RANGE_LOWER,
+        maxValue=WEIGHT_RANGE_UPPER,
+    ):
         # Append a new weight layer with random values in the defined range
-        weights = (maxValue - minValue) * np.random.rand(size, self.values[
-            -1].getSize()) + minValue
+        weights = (maxValue - minValue) * np.random.rand(
+            size, self.values[-1].getSize()
+        ) + minValue
         self.weightLayers.append(WeightLayer(weights))
 
         # Set the former output layer's method to the default function
@@ -87,7 +93,8 @@ class NeuralNetwork:
         # Generate empty value layers
         self.values = [
             ValueLayerBatch(BATCH_SIZE, layer.getShape()[0], DEFAULT_FUNCTION)
-            for layer in self.weightLayers]
+            for layer in self.weightLayers
+        ]
         # Remove the final layer's activation method
         self.values[-1].setMethod()
 
@@ -109,14 +116,16 @@ class NeuralNetwork:
     def forward_propagate(self, inputData):
         if inputData.shape[1] != self.inputSize:
             print(
-                f"Invalid input data size, {inputData.shape[1]} != {self.inputSize}")
+                f"Invalid input data size, {inputData.shape[1]} != {self.inputSize}"
+            )
             return
 
         # Forward propagate input through the network
         # inputData is used to store the previous layer's values
         for i in range(len(self.values)):
             self.values[i].values = inputData.dot(
-                self.weightLayers[i].weights.T)
+                self.weightLayers[i].weights.T
+            )
             self.values[i].applyMethod()
             self.values[i].applyDropoutNewMask()
             inputData = self.values[i].values
@@ -127,7 +136,7 @@ class NeuralNetwork:
         for batch in self.training:
             output = self.forward_propagate(batch.input)
             self.values[-1].delta = (
-                    2 / self.outputSize * (output - batch.output)
+                2 / self.outputSize * (output - batch.output)
             )
             if self.values[-1].activationFunction.__name__ == "SoftMax":
                 self.values[-1].delta /= batch.output.shape[0]
@@ -135,10 +144,10 @@ class NeuralNetwork:
             # Hidden layer delta calculation
             for i in range(len(self.values) - 2, -1, -1):
                 self.values[i].delta = (
-                        self.values[i + 1].delta.dot(
-                            self.weightLayers[i + 1].weights
-                        )
-                        * self.values[i].getAfterDeriv()
+                    self.values[i + 1].delta.dot(
+                        self.weightLayers[i + 1].weights
+                    )
+                    * self.values[i].getAfterDeriv()
                 )
                 self.values[i].applyMaskToDelta()
 
@@ -181,7 +190,7 @@ class NeuralNetwork:
         print(target[0])
 
     def add_sample_colour(
-            self, r: float, g: float, b: float, colour: int, target
+        self, r: float, g: float, b: float, colour: int, target
     ):
         target.append(
             Data(
@@ -207,7 +216,7 @@ class NeuralNetwork:
             data = list(map(float, handle.read().split()))
 
         for i in range(0, len(data), 4):
-            r, g, b, out = data[i: i + 4]
+            r, g, b, out = data[i : i + 4]
             self.add_sample_colour(r, g, b, int(out), target)
 
     def validate_multi_class(self, target):
@@ -239,8 +248,8 @@ class NeuralNetwork:
         train_output = handler.get_train_output(TRAINING_SIZE)
         self.training = [
             Data(
-                train_input[i: i + BATCH_SIZE],
-                train_output[i: i + BATCH_SIZE],
+                train_input[i : i + BATCH_SIZE],
+                train_output[i : i + BATCH_SIZE],
             )
             for i in range(0, TRAINING_SIZE, BATCH_SIZE)
         ]
@@ -250,7 +259,7 @@ class NeuralNetwork:
         test_output = handler.get_test_output(TEST_SIZE)
         self.testing = [
             Data(
-                test_input[i: i + BATCH_SIZE], test_output[i: i + BATCH_SIZE]
+                test_input[i : i + BATCH_SIZE], test_output[i : i + BATCH_SIZE]
             )
             for i in range(0, TEST_SIZE, BATCH_SIZE)
         ]
