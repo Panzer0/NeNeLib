@@ -1,12 +1,9 @@
 import pickle
-
 import numpy as np
-
 import ActivationFunctions.ReLU
 import ActivationFunctions.Sigmoid
+
 from ActivationFunctions.SoftMax import SoftMax
-from ActivationFunctions.HyperbolicTangent import HyperbolicTangent
-from ActivationFunctions.NoFunction import NoFunction
 from MNISTHandler import MNISTHandler
 from NetworkStructure.DataBatch import Data
 from NetworkStructure.ValueLayerBatch import ValueLayerBatch
@@ -50,6 +47,9 @@ class NeuralNetwork:
         )
         self.blank_data()
 
+    # todo: On further inspection, this makes no sense.
+    # todo: It doesn't seem to be used anywhere either.
+    # TODO: Remove, I guess.
     def is_empty(self) -> bool:
         return len(self.weightLayers) > 0
 
@@ -63,46 +63,31 @@ class NeuralNetwork:
         return self.values[-1]
 
     def display(self):
-        for weight, values, index in zip(
-            self.weightLayers, self.values, range(len(self.weightLayers))
-        ):
-            print(
-                f"{weight} w[{index}]\n"
-                f"{values} v[{index}] ({values.activationFunction.__name__})"
-            )
+        for i, (w, v) in enumerate(zip(self.weightLayers, self.values)):
+            print(f"{w} w[{i}]\n{v} v[{i}] ({v.activationFunction.__name__})")
 
-    def add_layer(
-        self,
-        batchSize,
-        size,
-        minValue=WEIGHT_RANGE_LOWER,
-        maxValue=WEIGHT_RANGE_UPPER,
-    ):
-        # Append a new weight layer with values in the defined range
-        difference = abs(minValue - maxValue)
-        self.weightLayers.append(
-            WeightLayer(
-                difference * np.random.rand(size, self.values[-1].getSize())
-                + minValue
-            )
-        )
+    def add_layer(self, batchSize, size, minValue=WEIGHT_RANGE_LOWER,
+                  maxValue=WEIGHT_RANGE_UPPER):
+        # Append a new weight layer with random values in the defined range
+        weights = (maxValue - minValue) * np.random.rand(size, self.values[
+            -1].getSize()) + minValue
+        self.weightLayers.append(WeightLayer(weights))
+
         # Set the former output layer's method to the default function
         self.values[-1].setMethod(DEFAULT_FUNCTION)
+
         # Append a new output value layer with no activation method
         self.values.append(ValueLayerBatch(batchSize, size, OUTPUT_FUNCTION))
         self.outputSize = size
+
         # Remove old data, which might no longer be suitable for the new shape
         self.blank_data()
 
     def refresh_values(self):
-        self.values = list()
         # Generate empty value layers
-        for layer in self.weightLayers:
-            self.values.append(
-                ValueLayerBatch(
-                    BATCH_SIZE, layer.getShape()[0], DEFAULT_FUNCTION
-                )
-            )
+        self.values = [
+            ValueLayerBatch(BATCH_SIZE, layer.getShape()[0], DEFAULT_FUNCTION)
+            for layer in self.weightLayers]
         # Remove the final layer's activation method
         self.values[-1].setMethod()
 
@@ -121,64 +106,50 @@ class NeuralNetwork:
                 self.weightLayers, handle, protocol=pickle.HIGHEST_PROTOCOL
             )
 
-    # Same as predict, but applies activation method
-    # Perhaps combine the two into a single method with a flag argument?
     def forward_propagate(self, inputData):
-        # Invalid input handling
         if inputData.shape[1] != self.inputSize:
             print(
-                f"Invalid input data size, {inputData.shape[1]} != {self.inputSize}"
-            )
+                f"Invalid input data size, {inputData.shape[1]} != {self.inputSize}")
             return
-        inputData = np.squeeze(inputData)
-        self.values[0].values = inputData.dot(self.weightLayers[0].weights.T)
-        # Multiplying the input data
-        self.values[0].applyMethod()
-        self.values[0].applyDropoutNewMask()
-        for i in range(1, len(self.values)):
-            self.values[i].values = self.values[i - 1].values.dot(
-                self.weightLayers[i].weights.T
-            )
+
+        # Forward propagate input through the network
+        # inputData is used to store the previous layer's values
+        for i in range(len(self.values)):
+            self.values[i].values = inputData.dot(
+                self.weightLayers[i].weights.T)
             self.values[i].applyMethod()
             self.values[i].applyDropoutNewMask()
+            inputData = self.values[i].values
+
         return self.values[-1].values
 
     def fit(self):
-        # todo: Add iteration over multiple batches
         for batch in self.training:
             output = self.forward_propagate(batch.input)
             self.values[-1].delta = (
-                2 / self.outputSize * (output - batch.output)
+                    2 / self.outputSize * (output - batch.output)
             )
-            # print(f"delta = {self.values[-1].delta}")
             if self.values[-1].activationFunction.__name__ == "SoftMax":
                 self.values[-1].delta /= batch.output.shape[0]
 
-            # Calculate the delta of hidden layers
+            # Hidden layer delta calculation
             for i in range(len(self.values) - 2, -1, -1):
-                self.values[i].delta = self.values[i + 1].delta.dot(
-                    self.weightLayers[i + 1].weights
-                )
                 self.values[i].delta = (
-                    self.values[i].delta * self.values[i].getAfterDeriv()
+                        self.values[i + 1].delta.dot(
+                            self.weightLayers[i + 1].weights
+                        )
+                        * self.values[i].getAfterDeriv()
                 )
                 self.values[i].applyMaskToDelta()
 
-            # Backpropagate
-            for i in range(len(self.weightLayers) - 1, -1, -1):
-                if i == 0:
-                    self.weightLayers[i].weights = (
-                        self.weightLayers[i].weights
-                        - ALPHA * batch.input.T.dot(self.values[i].delta).T
-                    )
-                else:
-                    self.weightLayers[i].weights = (
-                        self.weightLayers[i].weights
-                        - ALPHA
-                        * self.values[i - 1]
-                        .values.T.dot(self.values[i].delta)
-                        .T
-                    )
+            # Backpropagation
+            for i in reversed(range(len(self.weightLayers))):
+                grad = (
+                    batch.input.T.dot(self.values[i].delta).T
+                    if i == 0
+                    else self.values[i - 1].values.T.dot(self.values[i].delta).T
+                )
+                self.weightLayers[i].weights -= ALPHA * grad
 
     def update_latest_data_manual(self, target):
         for i in range(len(target[-1].input[0])):
@@ -191,7 +162,10 @@ class NeuralNetwork:
 
     def add_sample_manual(self, target):
         target.append(
-            Data(np.ones((1, self.inputSize)), np.ones((1, self.outputSize)),)
+            Data(
+                np.ones((1, self.inputSize)),
+                np.ones((1, self.outputSize)),
+            )
         )
         network.update_latest_data_manual(target)
 
@@ -207,7 +181,7 @@ class NeuralNetwork:
         print(target[0])
 
     def add_sample_colour(
-        self, r: float, g: float, b: float, colour: int, target
+            self, r: float, g: float, b: float, colour: int, target
     ):
         target.append(
             Data(
@@ -230,42 +204,19 @@ class NeuralNetwork:
 
     def load_colour_file(self, filename, target):
         with open(filename, "r") as handle:
-            data = [*map(float, handle.read().split())]
+            data = list(map(float, handle.read().split()))
 
-        flag = 0
-        for i in range(len(data)):
-            if flag == 0:
-                print(f"0, {data[i]}")
-                r = data[i]
-                flag += 1
-            elif flag == 1:
-                print(f"1, {data[i]}")
-                g = data[i]
-                flag += 1
-            elif flag == 2:
-                print(f"2, {data[i]}")
-                b = data[i]
-                flag += 1
-            elif flag == 3:
-                print(f"3, {data[i]}")
-                out = data[i]
-                self.add_sample_colour(r, g, b, int(out), target)
-                flag = 0
+        for i in range(0, len(data), 4):
+            r, g, b, out = data[i: i + 4]
+            self.add_sample_colour(r, g, b, int(out), target)
 
     def validate_multi_class(self, target):
-        total = 0
-        correct = 0
+        total, correct = 0, 0
         for sampleBatch in target:
             resultBatch = self.forward_propagate(sampleBatch.input)
             for result, sample in zip(resultBatch, sampleBatch.output):
                 total += 1
-                if np.argmax(result) == np.argmax(sample):
-                    # print("Correct!\n")
-                    correct += 1
-                # else:
-                #     print(
-                #         f"WRONG!, {np.argmax(result)} != {np.argmax(sample)}\n"
-                #     )
+                correct += np.argmax(result) == np.argmax(sample)
         return float(correct / total * 100)
 
     def activation_method_test(self):
@@ -287,15 +238,22 @@ class NeuralNetwork:
         train_input = handler.get_train_input(TRAINING_SIZE)
         train_output = handler.get_train_output(TRAINING_SIZE)
         self.training = [
-            Data(train_input[i:i + BATCH_SIZE], train_output[i:i + BATCH_SIZE])
-            for i in range(0, TRAINING_SIZE, BATCH_SIZE)]
+            Data(
+                train_input[i: i + BATCH_SIZE],
+                train_output[i: i + BATCH_SIZE],
+            )
+            for i in range(0, TRAINING_SIZE, BATCH_SIZE)
+        ]
 
         # Load testing data
         test_input = handler.get_test_input(TEST_SIZE)
         test_output = handler.get_test_output(TEST_SIZE)
         self.testing = [
-            Data(test_input[i:i + BATCH_SIZE], test_output[i:i + BATCH_SIZE])
-            for i in range(0, TEST_SIZE, BATCH_SIZE)]
+            Data(
+                test_input[i: i + BATCH_SIZE], test_output[i: i + BATCH_SIZE]
+            )
+            for i in range(0, TEST_SIZE, BATCH_SIZE)
+        ]
 
     def single_out_data(self, target):
         temp = target[0]
