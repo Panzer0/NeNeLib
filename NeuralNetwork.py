@@ -283,15 +283,15 @@ class NeuralNetwork:
         handler = MNISTHandler()
         self.training.clear()
         for input, output in zip(
-                handler.getTrainInput(TRAINING_SIZE),
-                handler.getTrainOutput(TRAINING_SIZE)
+                handler.get_train_input(TRAINING_SIZE),
+                handler.get_train_output(TRAINING_SIZE)
         ):
             self.training.append(Data(input, output))
 
         self.testing.clear()
         for input, output in zip(
-                handler.getTestInput(TEST_SIZE),
-                handler.getTestOutput(TEST_SIZE)
+                handler.get_test_input(TEST_SIZE),
+                handler.get_test_output(TEST_SIZE)
         ):
             self.testing.append(Data(input, output))
 

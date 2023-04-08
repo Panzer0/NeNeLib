@@ -1,12 +1,9 @@
 import pickle
-
 import numpy as np
-
 import ActivationFunctions.ReLU
 import ActivationFunctions.Sigmoid
+
 from ActivationFunctions.SoftMax import SoftMax
-from ActivationFunctions.HyperbolicTangent import HyperbolicTangent
-from ActivationFunctions.NoFunction import NoFunction
 from MNISTHandler import MNISTHandler
 from NetworkStructure.DataBatch import Data
 from NetworkStructure.ValueLayerBatch import ValueLayerBatch
@@ -48,68 +45,63 @@ class NeuralNetwork:
         self.values.append(
             ValueLayerBatch(BATCH_SIZE, firstLayerSize, OUTPUT_FUNCTION)
         )
-        self.blankData()
+        self.blank_data()
 
-    def isEmpty(self) -> bool:
+    # todo: On further inspection, this makes no sense.
+    # todo: It doesn't seem to be used anywhere either.
+    # TODO: Remove, I guess.
+    def is_empty(self) -> bool:
         return len(self.weightLayers) > 0
 
-    def hasData(self, target) -> bool:
+    def has_data(self, target) -> bool:
         return len(target) > 0
 
-    def blankData(self):
+    def blank_data(self):
         self.training = list()
 
-    def getOutputLayer(self):
+    def get_output_layer(self):
         return self.values[-1]
 
     def display(self):
-        for weight, values, index in zip(
-            self.weightLayers, self.values, range(len(self.weightLayers))
-        ):
-            print(
-                f"{weight} w[{index}]\n"
-                f"{values} v[{index}] ({values.activationFunction.__name__})"
-            )
+        for i, (w, v) in enumerate(zip(self.weightLayers, self.values)):
+            print(f"{w} w[{i}]\n{v} v[{i}] ({v.activationFunction.__name__})")
 
-    def addLayer(
+    def add_layer(
         self,
         batchSize,
         size,
         minValue=WEIGHT_RANGE_LOWER,
         maxValue=WEIGHT_RANGE_UPPER,
     ):
-        # Append a new weight layer with values in the defined range
-        difference = abs(minValue - maxValue)
-        self.weightLayers.append(
-            WeightLayer(
-                difference * np.random.rand(size, self.values[-1].getSize())
-                + minValue
-            )
-        )
+        # Append a new weight layer with random values in the defined range
+        weights = (maxValue - minValue) * np.random.rand(
+            size, self.values[-1].getSize()
+        ) + minValue
+        self.weightLayers.append(WeightLayer(weights))
+
         # Set the former output layer's method to the default function
         self.values[-1].setMethod(DEFAULT_FUNCTION)
+
         # Append a new output value layer with no activation method
         self.values.append(ValueLayerBatch(batchSize, size, OUTPUT_FUNCTION))
         self.outputSize = size
-        # Remove old data, which might no longer be suitable for the new shape
-        self.blankData()
 
-    def refreshValues(self):
-        self.values = list()
+        # Remove old data, which might no longer be suitable for the new shape
+        self.blank_data()
+
+    def refresh_values(self):
         # Generate empty value layers
-        for layer in self.weightLayers:
-            self.values.append(
-                ValueLayerBatch(
-                    BATCH_SIZE, layer.getShape()[0], DEFAULT_FUNCTION
-                )
-            )
+        self.values = [
+            ValueLayerBatch(BATCH_SIZE, layer.getShape()[0], DEFAULT_FUNCTION)
+            for layer in self.weightLayers
+        ]
         # Remove the final layer's activation method
         self.values[-1].setMethod()
 
     def load(self, filename):
         with open(filename, "rb") as handle:
             self.weightLayers = pickle.load(handle)
-        self.refreshValues()
+        self.refresh_values()
         self.training.clear()
         self.testing.clear()
         self.inputSize = self.weightLayers[0].getShape()[1]
@@ -121,66 +113,54 @@ class NeuralNetwork:
                 self.weightLayers, handle, protocol=pickle.HIGHEST_PROTOCOL
             )
 
-    # Same as predict, but applies activation method
-    # Perhaps combine the two into a single method with a flag argument?
-    def forwardPropagate(self, inputData):
-        # Invalid input handling
+    def forward_propagate(self, inputData):
         if inputData.shape[1] != self.inputSize:
             print(
                 f"Invalid input data size, {inputData.shape[1]} != {self.inputSize}"
             )
             return
-        inputData = np.squeeze(inputData)
-        self.values[0].values = inputData.dot(self.weightLayers[0].weights.T)
-        # Multiplying the input data
-        self.values[0].applyMethod()
-        self.values[0].applyDropoutNewMask()
-        for i in range(1, len(self.values)):
-            self.values[i].values = self.values[i - 1].values.dot(
+
+        # Forward propagate input through the network
+        # inputData is used to store the previous layer's values
+        for i in range(len(self.values)):
+            self.values[i].values = inputData.dot(
                 self.weightLayers[i].weights.T
             )
             self.values[i].applyMethod()
             self.values[i].applyDropoutNewMask()
+            inputData = self.values[i].values
+
         return self.values[-1].values
 
     def fit(self):
-        # todo: Add iteration over multiple batches
         for batch in self.training:
-            output = self.forwardPropagate(batch.input)
+            output = self.forward_propagate(batch.input)
             self.values[-1].delta = (
                 2 / self.outputSize * (output - batch.output)
             )
-            # print(f"delta = {self.values[-1].delta}")
             if self.values[-1].activationFunction.__name__ == "SoftMax":
                 self.values[-1].delta /= batch.output.shape[0]
 
-            # Calculate the delta of hidden layers
+            # Hidden layer delta calculation
             for i in range(len(self.values) - 2, -1, -1):
-                self.values[i].delta = self.values[i + 1].delta.dot(
-                    self.weightLayers[i + 1].weights
-                )
                 self.values[i].delta = (
-                    self.values[i].delta * self.values[i].getAfterDeriv()
+                    self.values[i + 1].delta.dot(
+                        self.weightLayers[i + 1].weights
+                    )
+                    * self.values[i].getAfterDeriv()
                 )
                 self.values[i].applyMaskToDelta()
 
-            # Backpropagate
-            for i in range(len(self.weightLayers) - 1, -1, -1):
-                if i == 0:
-                    self.weightLayers[i].weights = (
-                        self.weightLayers[i].weights
-                        - ALPHA * batch.input.T.dot(self.values[i].delta).T
-                    )
-                else:
-                    self.weightLayers[i].weights = (
-                        self.weightLayers[i].weights
-                        - ALPHA
-                        * self.values[i - 1]
-                        .values.T.dot(self.values[i].delta)
-                        .T
-                    )
+            # Backpropagation
+            for i in reversed(range(len(self.weightLayers))):
+                grad = (
+                    batch.input.T.dot(self.values[i].delta).T
+                    if i == 0
+                    else self.values[i - 1].values.T.dot(self.values[i].delta).T
+                )
+                self.weightLayers[i].weights -= ALPHA * grad
 
-    def updateLatestDataManual(self, target):
+    def update_latest_data_manual(self, target):
         for i in range(len(target[-1].input[0])):
             target[-1].input[0][i] = float(input("Enter input value: "))
         print(target[-1].input[0])
@@ -189,13 +169,16 @@ class NeuralNetwork:
             target[-1].output[0][i] = float(input("Enter output value: "))
         print(target[-1].output[0])
 
-    def addSampleManual(self, target):
+    def add_sample_manual(self, target):
         target.append(
-            Data(np.ones((1, self.inputSize)), np.ones((1, self.outputSize)),)
+            Data(
+                np.ones((1, self.inputSize)),
+                np.ones((1, self.outputSize)),
+            )
         )
-        network.updateLatestDataManual(target)
+        network.update_latest_data_manual(target)
 
-    def addSampleRandom(self, target):
+    def add_sample_random(self, target):
         target.append(
             Data(
                 np.random.rand(1, self.inputSize),
@@ -203,10 +186,10 @@ class NeuralNetwork:
             )
         )
 
-    def displayDataset(self, target):
+    def display_dataset(self, target):
         print(target[0])
 
-    def addSampleColour(
+    def add_sample_colour(
         self, r: float, g: float, b: float, colour: int, target
     ):
         target.append(
@@ -216,6 +199,7 @@ class NeuralNetwork:
             )
         )
 
+        print(f"Val = {target[-1].input[0][0]}")
         target[-1].input[0][0] = r
         target[-1].input[0][1] = g
         target[-1].input[0][2] = b
@@ -227,50 +211,27 @@ class NeuralNetwork:
             f"Appending input{target[-1].input[0]}, output = {target[-1].output[0]}"
         )
 
-    def loadColourFile(self, filename, target):
+    def load_colour_file(self, filename, target):
         with open(filename, "r") as handle:
-            data = [*map(float, handle.read().split())]
+            data = list(map(float, handle.read().split()))
 
-        flag = 0
-        for i in range(len(data)):
-            if flag == 0:
-                print(f"0, {data[i]}")
-                r = data[i]
-                flag += 1
-            elif flag == 1:
-                print(f"1, {data[i]}")
-                g = data[i]
-                flag += 1
-            elif flag == 2:
-                print(f"2, {data[i]}")
-                b = data[i]
-                flag += 1
-            elif flag == 3:
-                print(f"3, {data[i]}")
-                out = data[i]
-                self.addSampleColour(r, g, b, int(out), target)
-                flag = 0
+        for i in range(0, len(data), 4):
+            r, g, b, out = data[i : i + 4]
+            self.add_sample_colour(r, g, b, int(out), target)
 
-    def validateMultiClass(self, target):
-        total = 0
-        correct = 0
+    def validate_multi_class(self, target):
+        total, correct = 0, 0
         for sampleBatch in target:
-            resultBatch = self.forwardPropagate(sampleBatch.input)
+            resultBatch = self.forward_propagate(sampleBatch.input)
             for result, sample in zip(resultBatch, sampleBatch.output):
                 total += 1
-                if np.argmax(result) == np.argmax(sample):
-                    # print("Correct!\n")
-                    correct += 1
-                # else:
-                #     print(
-                #         f"WRONG!, {np.argmax(result)} != {np.argmax(sample)}\n"
-                #     )
+                correct += np.argmax(result) == np.argmax(sample)
         return float(correct / total * 100)
 
-    def activationMethodTest(self):
+    def activation_method_test(self):
         self.values[0].applyMethod()
 
-    def setWeights(self, index):
+    def set_weights(self, index):
         self.weightLayers[index].weights = np.array(
             [
                 [float(input("Enter weight value: ")) for _ in row]
@@ -280,36 +241,30 @@ class NeuralNetwork:
 
     # Overwrites the train and test data with MNIST
     def load_MNIST(self):
-        # todo: Validate data size
         handler = MNISTHandler()
 
-        self.training.clear()
-        tempInput = handler.getTrainInput(TRAINING_SIZE)
-        tempOutput = handler.getTrainOutput(TRAINING_SIZE)
-        self.training = np.squeeze(
-            [
-                Data(tempInput[low:high], tempOutput[low:high])
-                for low, high in zip(
-                    range(0, TRAINING_SIZE - BATCH_SIZE + 1, BATCH_SIZE),
-                    range(BATCH_SIZE, TRAINING_SIZE + 1, BATCH_SIZE),
-                )
-            ]
-        )
+        # Load training data
+        train_input = handler.get_train_input(TRAINING_SIZE)
+        train_output = handler.get_train_output(TRAINING_SIZE)
+        self.training = [
+            Data(
+                train_input[i : i + BATCH_SIZE],
+                train_output[i : i + BATCH_SIZE],
+            )
+            for i in range(0, TRAINING_SIZE, BATCH_SIZE)
+        ]
 
-        self.testing.clear()
-        tempInput = handler.getTrainInput(TEST_SIZE)
-        tempOutput = handler.getTrainOutput(TEST_SIZE)
-        self.testing = np.squeeze(
-            [
-                Data(tempInput[low:high], tempOutput[low:high])
-                for low, high in zip(
-                    range(0, TEST_SIZE - BATCH_SIZE + 1, BATCH_SIZE),
-                    range(BATCH_SIZE, TEST_SIZE + 1, BATCH_SIZE),
-                )
-            ]
-        )
+        # Load testing data
+        test_input = handler.get_test_input(TEST_SIZE)
+        test_output = handler.get_test_output(TEST_SIZE)
+        self.testing = [
+            Data(
+                test_input[i : i + BATCH_SIZE], test_output[i : i + BATCH_SIZE]
+            )
+            for i in range(0, TEST_SIZE, BATCH_SIZE)
+        ]
 
-    def singleOutData(self, target):
+    def single_out_data(self, target):
         temp = target[0]
         target.clear()
         target.append(temp)
@@ -335,37 +290,37 @@ if __name__ == "__main__":
             "10- Load colour file (REQUIRES 3/4 I/O FORMAT)\n"
             "11- Validate multi-class\n"
             "12- Set weights\n"
-            "13- Load MNIST\n"
+            "13- Load MNIST (REQUIRES 784/10 I/O FORMAT)\n"
         )
         operation = int(input("Choose operation: "))
         if operation == 0:
-            network.addLayer(BATCH_SIZE, int(input("Enter layer size: ")))
+            network.add_layer(BATCH_SIZE, int(input("Enter layer size: ")))
         elif operation == 1:
-            network.addLayer(
+            network.add_layer(
                 int(input("Enter layer size: ")),
                 int(input("Enter min weight value: ")),
                 int(input("Enter max weight value: ")),
             )
         elif operation == 2:
-            if network.hasData(network.training):
+            if network.has_data(network.training):
                 count = int(input("How many times? "))
                 for i in range(count):
                     network.fit()
                     print(
-                        f"{i}: {network.validateMultiClass(network.training)}%"
+                        f"{i}: {network.validate_multi_class(network.training)}%"
                     )
             else:
                 print(NO_DATA_MESS)
         elif operation == 3:
-            network.displayDataset(network.training)
+            network.display_dataset(network.training)
             network.display()
         elif operation == 4:
             choice = int(input(TRAIN_OR_TEST_MESS))
             target = network.training if choice == 0 else network.testing
 
-            if network.hasData(target):
+            if network.has_data(target):
                 for sample in target:
-                    print(network.forwardPropagate(sample.input))
+                    print(network.forward_propagate(sample.input))
             else:
                 print(NO_DATA_MESS)
         elif operation == 5:
@@ -375,36 +330,35 @@ if __name__ == "__main__":
         elif operation == 7:
             choice = int(input(TRAIN_OR_TEST_MESS))
             target = network.training if choice == 0 else network.testing
-
-            if network.hasData(target):
-                network.updateLatestDataManual(target)
-                network.displayDataset(target)
+            if network.has_data(target):
+                network.update_latest_data_manual(target)
+                network.display_dataset(target)
             else:
                 print(NO_DATA_MESS)
         elif operation == 8:
             choice = int(input(TRAIN_OR_TEST_MESS))
             target = network.training if choice == 0 else network.testing
 
-            network.addSampleManual(target)
-            network.displayDataset(target)
+            network.add_sample_manual(target)
+            network.display_dataset(target)
         elif operation == 9:
             choice = int(input(TRAIN_OR_TEST_MESS))
             target = network.training if choice == 0 else network.testing
 
-            network.addSampleRandom(target)
-            network.displayDataset(target)
+            network.add_sample_random(target)
+            network.display_dataset(target)
         elif operation == 10:
             choice = int(input(TRAIN_OR_TEST_MESS))
             target = network.training if choice == 0 else network.testing
 
-            network.loadColourFile(str(input("Enter file name: ")), target)
+            network.load_colour_file(str(input("Enter file name: ")), target)
         elif operation == 11:
             choice = int(input(TRAIN_OR_TEST_MESS))
             target = network.training if choice == 0 else network.testing
 
-            print(f"{network.validateMultiClass(target)}% correct")
+            print(f"{network.validate_multi_class(target)}% correct")
         elif operation == 12:
-            network.setWeights(int(input("Enter weight layer index: ")))
+            network.set_weights(int(input("Enter weight layer index: ")))
         elif operation == 13:
             network.load_MNIST()
         else:
