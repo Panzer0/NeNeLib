@@ -1,10 +1,5 @@
 import numpy as np
-
 from ActivationFunctions.NoFunction import NoFunction
-from ActivationFunctions.ReLU import ReLU
-from ActivationFunctions.SoftMax import SoftMax
-from ActivationFunctions.Sigmoid import Sigmoid
-from ActivationFunctions.HyperbolicTangent import HyperbolicTangent
 
 
 class ValueLayerBatch:
