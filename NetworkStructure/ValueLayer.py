@@ -1,8 +1,5 @@
 import numpy as np
-
 from ActivationFunctions.NoFunction import NoFunction
-from ActivationFunctions.ReLU import ReLU
-from ActivationFunctions.Sigmoid import Sigmoid
 
 
 class ValueLayer:
