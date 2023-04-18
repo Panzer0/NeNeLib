@@ -5,9 +5,10 @@ import numpy as np
 #   Multiply by filters
 from ActivationFunctions.ReLU import ReLU
 
-ALPHA = 0.1
+ALPHA = 0.01
 
 ####    Below is a skeleton of the entire CNN rather than just the data layer
+
 
 def calc_kernel_layer(sections, kernels):
     return np.dot(sections, kernels.T)
@@ -22,7 +23,7 @@ class DataLayerConv:
         self.expected = expected
         # todo: Should the two be merged? If I filters are just glorified
         #       weights, that'd make things much easier
-        self.filters = list()
+        # self.weights = list()
         self.weights = list()
 
     def add_filter(self, new_filter=None):
@@ -38,9 +39,11 @@ class DataLayerConv:
             self.weights.append(new_weights)
 
     def split(self, size):
-        subarrays = [self.image[y:y + size, x:x + size].T.flatten()
-                     for x in range(self.image.shape[1] - size + 1)
-                     for y in range(self.image.shape[0] - size + 1)]
+        subarrays = [
+            self.image[y : y + size, x : x + size].T.flatten()
+            for x in range(self.image.shape[1] - size + 1)
+            for y in range(self.image.shape[0] - size + 1)
+        ]
         return np.array(subarrays)
 
     def __str__(self):
@@ -49,33 +52,44 @@ class DataLayerConv:
 
 if __name__ == "__main__":
     expected = np.array([0, 1])
-    image = np.array([[8.5, 0.65, 1.2],
-                      [9.5, 0.8, 1.3],
-                      [9.9, 0.8, 0.5],
-                      [9.0, 0.9, 1.0]])
-    filters = np.array([[0.1, 0.2, -0.1, -0.1, 0.1, 0.9, 0.1, 0.4, 0.1],
-                        [0.3, 1.1, -0.3, 0.1, 0.2, 0.0, 0.0, 1.3, 0.1]])
-    weights = np.array([[0.1, -0.2, 0.1, 0.3],
-                        [0.2, 0.1, 0.5, -0.3]])
+    image = np.array(
+        [[8.5, 0.65, 1.2], [9.5, 0.8, 1.3], [9.9, 0.8, 0.5], [9.0, 0.9, 1.0]]
+    )
+    filters = np.array(
+        [
+            [0.1, 0.2, -0.1, -0.1, 0.1, 0.9, 0.1, 0.4, 0.1],
+            [0.3, 1.1, -0.3, 0.1, 0.2, 0.0, 0.0, 1.3, 0.1],
+        ]
+    )
+    weights = np.array([[0.1, -0.2, 0.1, 0.3], [0.2, 0.1, 0.5, -0.3]])
 
     data = DataLayerConv(expected, image)
-    data.add_filter(filters)
+    data.add_weights(filters)
     data.add_weights(weights)
 
-    kernel_layer = calc_kernel_layer(data.split(3), data.filters[0])
+    kernel_layer = calc_kernel_layer(data.split(3), data.weights[0])
     kernel_layer = ReLU.function(kernel_layer)
     ## Entering final layer, flattening
     kernel_layer = kernel_layer.flatten()
 
-    layer_2_values = calc_kernel_layer(kernel_layer, data.weights[0])
+    layer_2_values = calc_kernel_layer(kernel_layer, data.weights[1])
     # Network delta
     layer_2_delta = layer_2_values - data.expected
     ## Backpropagation
-    layer_1_delta = np.dot(layer_2_delta, data.weights[0])
+    layer_1_delta = np.dot(layer_2_delta, data.weights[1])
     layer_1_delta = layer_1_delta * ReLU.derivative(kernel_layer[np.newaxis, :])
     layer_1_delta = layer_1_delta.reshape(2, 2)
 
-    print(layer_2_delta.T)
-    print(layer_2_delta)
-    layer_2_weight_delta = np.dot(layer_2_delta.T, kernel_layer)
-    print(layer_2_weight_delta)
+    # Very clunky np operations. Surely this can be streamlined somehow.
+    layer_2_weight_delta = np.dot(
+        layer_2_delta.reshape(-1, 1), kernel_layer[np.newaxis, :]
+    )
+    layer_1_weight_delta = np.dot(layer_1_delta.T, data.split(3))
+
+    data.weights[1] = data.weights[1] - ALPHA * layer_2_weight_delta
+    data.weights[0] = data.weights[0] - ALPHA * layer_1_weight_delta
+
+    print(data.weights[1])
+    print(data.weights[0])
+
+
