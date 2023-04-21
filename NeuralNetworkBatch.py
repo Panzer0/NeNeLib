@@ -67,11 +67,11 @@ class NeuralNetwork:
             print(f"{w} w[{i}]\n{v} v[{i}] ({v.activationFunction.__name__})")
 
     def add_layer(
-            self,
-            batchSize,
-            size,
-            minValue=WEIGHT_RANGE_LOWER,
-            maxValue=WEIGHT_RANGE_UPPER,
+        self,
+        batchSize,
+        size,
+        minValue=WEIGHT_RANGE_LOWER,
+        maxValue=WEIGHT_RANGE_UPPER,
     ):
         # Append a new weight layer with random values in the defined range
         weights = (maxValue - minValue) * np.random.rand(
@@ -136,13 +136,14 @@ class NeuralNetwork:
         for batch in self.training:
             output = self.forward_propagate(batch.input)
             self.values[-1].delta = (
-                    2 / self.outputSize * (output - batch.output)
+                2 / self.outputSize * (output - batch.output)
             )
             if self.values[-1].activationFunction.__name__ == "SoftMax":
                 self.values[-1].delta /= batch.output.shape[0]
 
             # Hidden layer delta calculation
-            for i in range(len(self.values) - 2, -1, -1):
+            # todo: Make sure the range covers all values
+            for i in reversed(range(len(self.values) - 1)):
                 self.values[i].delta = (
                         self.values[i + 1].delta.dot(
                             self.weightLayers[i + 1].weights
@@ -174,7 +175,7 @@ class NeuralNetwork:
             DataBatch(
                 np.ones((1, self.inputSize)),
                 np.ones((1, self.outputSize)),
-                BATCH_SIZE == 1
+                BATCH_SIZE == 1,
             )
         )
         network.update_latest_data_manual(target)
@@ -184,7 +185,7 @@ class NeuralNetwork:
             DataBatch(
                 np.random.rand(1, self.inputSize),
                 np.random.rand(1, self.outputSize),
-                BATCH_SIZE == 1
+                BATCH_SIZE == 1,
             )
         )
 
@@ -195,13 +196,13 @@ class NeuralNetwork:
             print("Dataset is empty")
 
     def add_sample_colour(
-            self, r: float, g: float, b: float, colour: int, target
+        self, r: float, g: float, b: float, colour: int, target
     ):
         target.append(
             DataBatch(
                 np.zeros((1, network.inputSize)),
                 np.zeros((1, network.outputSize)),
-                BATCH_SIZE == 1
+                BATCH_SIZE == 1,
             )
         )
 
@@ -222,7 +223,7 @@ class NeuralNetwork:
             data = list(map(float, handle.read().split()))
 
         for i in range(0, len(data), 4):
-            r, g, b, out = data[i: i + 4]
+            r, g, b, out = data[i : i + 4]
             self.add_sample_colour(r, g, b, int(out), target)
 
     def validate_multi_class(self, target):
@@ -254,9 +255,9 @@ class NeuralNetwork:
         train_output = handler.get_train_output(TRAINING_SIZE)
         self.training = [
             DataBatch(
-                train_input[i: i + BATCH_SIZE],
-                train_output[i: i + BATCH_SIZE],
-                BATCH_SIZE == 1
+                train_input[i : i + BATCH_SIZE],
+                train_output[i : i + BATCH_SIZE],
+                BATCH_SIZE == 1,
             )
             for i in range(0, TRAINING_SIZE, BATCH_SIZE)
         ]
@@ -266,8 +267,9 @@ class NeuralNetwork:
         test_output = handler.get_test_output(TEST_SIZE)
         self.testing = [
             DataBatch(
-                test_input[i: i + BATCH_SIZE], test_output[i: i + BATCH_SIZE],
-                BATCH_SIZE == 1
+                test_input[i : i + BATCH_SIZE],
+                test_output[i : i + BATCH_SIZE],
+                BATCH_SIZE == 1,
             )
             for i in range(0, TEST_SIZE, BATCH_SIZE)
         ]
