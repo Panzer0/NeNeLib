@@ -26,7 +26,6 @@ class Conv:
 
     def split(self, image, size, stride=1, padding=False):
         image_copy = np.pad(image, ((1, 1), (1, 1))) if padding else image
-        print(image_copy)
         subarrays = [
             image_copy[y: y + size, x: x + size].T.flatten()
             for x in range(image_copy.shape[1] - size + 1)[::stride]

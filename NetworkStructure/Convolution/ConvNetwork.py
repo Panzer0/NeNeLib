@@ -2,6 +2,8 @@ import numpy as np
 
 from NetworkStructure.Convolution.Conv import Conv
 from NetworkStructure.Convolution.Activation import Activation
+from NetworkStructure.Convolution.FullyConnected import FullyConnected
+from NetworkStructure.Convolution.ValueLayerConv import ValueLayerConv
 
 ALPHA = 0.01
 FILTER_COUNT = 2
@@ -26,24 +28,24 @@ class ConvNetwork:
         # todo: Create a new Data class that unites input and expected
         self.input = input
         self.expected = expected
-        self.conv = Conv(filters = FILTERS, dim=FILTER_SIZE, filter_count=FILTER_COUNT)
+        self.layer_1 = ValueLayerConv()
+
+        self.conv = Conv(filters=FILTERS, dim=FILTER_SIZE,
+                         filter_count=FILTER_COUNT)
         # todo
         # self.pool = Pool()
         self.activation = Activation()
-        # todo
-        # self.fully_connected = FullyConnected()
-        # todo: Temp replacement ----v
-        self.weights = WEIGHTS
+        # todo: Remember to remove WEIGHTS, this is meant to be random
+        self.full_con = FullyConnected(WEIGHTS)
 
-    #todo: Making layer_1_values a self value is terribly clunky. Change it.
+    # todo: Making layer_1_values a self value is terribly clunky. Change it.
     # todo: This is where I should use the ValueLayer type. Vals and deltas.
     def forward_propagate(self, input):
-        self.layer_1_values = self.conv.apply(input)
-        self.layer_1_values = self.activation.apply(self.layer_1_values)
+        self.layer_1.values = self.activation.apply(self.conv.apply(input))
         # todo: Pooling goes here
-        self.layer_1_values = self.layer_1_values.flatten()
+        self.layer_1.values = self.layer_1.values.flatten()
         # todo: Replace the below with a FullyConnected object
-        return np.dot(self.layer_1_values, self.weights.T)
+        return self.full_con.apply(self.layer_1.values)
 
     def fit(self):
         for input, expected in zip(self.input, self.expected):
@@ -51,28 +53,24 @@ class ConvNetwork:
             # todo: method. Magic numbers have to be replaced, code has to be
             # todo: streamlined.
             output_delta = self.forward_propagate(input) - expected
-            print(f"Output delta is \n----------\n{output_delta}\n----------")
 
-            layer_1_delta = np.dot(output_delta, self.weights)
-            layer_1_delta = layer_1_delta * self.activation.back_propagate(self.layer_1_values[np.newaxis, :])
-            layer_1_delta = layer_1_delta.reshape(2, 2)
+            self.layer_1.delta = np.dot(output_delta, self.full_con.weights)
+            self.layer_1.delta = self.layer_1.delta * self.activation.back_propagate(
+                self.layer_1.values[np.newaxis, :])
+            self.layer_1.delta = self.layer_1.delta.reshape(2, 2)
 
             weight_delta = np.dot(
-                output_delta.reshape(-1, 1), self.layer_1_values[np.newaxis, :]
+                output_delta.reshape(-1, 1), self.layer_1.values[np.newaxis, :]
             )
-            filters_delta = np.dot(layer_1_delta.T, self.conv.split(input, 3))
+            filters_delta = np.dot(self.layer_1.delta.T, self.conv.split(input, 3))
 
-            self.weights = self.weights - ALPHA * weight_delta
+            self.full_con.weights = self.full_con.weights - ALPHA * weight_delta
             self.conv.filters = self.conv.filters - ALPHA * filters_delta
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
     network = ConvNetwork(IMAGE, EXPECTED)
-    for i in range(10):
+    for i in range(1):
         network.fit()
+    print(network.full_con.weights)
+    print(network.conv.filters)

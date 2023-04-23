@@ -1,19 +1,9 @@
-import numpy as np
-from ActivationFunctions.NoFunction import NoFunction
+from dataclasses import dataclass
+from typing import Optional
+from numpy import ndarray
 
 
-class ValueLayerBatch:
-    def __init__(
-        self,
-        batchSize,
-        layerSize,
-        activationFunction=NoFunction,
-        dropoutOdds=1.0,
-    ):
-        self.values = np.zeros((batchSize, layerSize))
-        self.mask = np.ones((batchSize, layerSize))
-        self.delta = np.zeros((batchSize, layerSize))
-        self.activationFunction = activationFunction
-
-        self.batchSize = batchSize
-        self.dropoutOdds = dropoutOdds
+@dataclass
+class ValueLayerConv:
+    values: Optional[ndarray] = None
+    delta: Optional[ndarray] = None
