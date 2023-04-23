@@ -23,5 +23,5 @@ class Activation:
         return self.function.derivative(data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

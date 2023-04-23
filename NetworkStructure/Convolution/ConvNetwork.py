@@ -30,8 +30,9 @@ class ConvNetwork:
         self.expected = expected
         self.layer_1 = ValueLayerConv()
 
-        self.conv = Conv(filters=FILTERS, dim=FILTER_SIZE,
-                         filter_count=FILTER_COUNT)
+        self.conv = Conv(
+            filters=FILTERS, dim=FILTER_SIZE, filter_count=FILTER_COUNT
+        )
         # todo
         # self.pool = Pool()
         self.activation = Activation()
@@ -43,8 +44,11 @@ class ConvNetwork:
     def forward_propagate(self, input):
         self.layer_1.values = self.activation.apply(self.conv.apply(input))
         # todo: Pooling goes here
+
+        # todo: It'd be cool if I could remove the flattening process and make
+        # todo: it internal to FullConnected, though it comes with its own set
+        # todo: of issues.
         self.layer_1.values = self.layer_1.values.flatten()
-        # todo: Replace the below with a FullyConnected object
         return self.full_con.apply(self.layer_1.values)
 
     def fit(self):
@@ -52,25 +56,28 @@ class ConvNetwork:
             # todo: The below is pretty much a copy-paste of that clunky main
             # todo: method. Magic numbers have to be replaced, code has to be
             # todo: streamlined.
-            output_delta = self.forward_propagate(input) - expected
-
-            self.layer_1.delta = np.dot(output_delta, self.full_con.weights)
-            self.layer_1.delta = self.layer_1.delta * self.activation.back_propagate(
-                self.layer_1.values[np.newaxis, :])
+            out_delta = self.forward_propagate(input) - expected
+            ## Layer 1 delta calculation
+            # FC layer
+            self.layer_1.delta = np.dot(out_delta, self.full_con.weights)
+            # Activation function
+            self.layer_1.delta = (
+                self.layer_1.delta
+                * self.activation.back_propagate(
+                    self.layer_1.values[np.newaxis, :]
+                )
+            )
+            # Restoring original shape
+            # todo: Hard coded right now, I'll make this dependent on pooling
             self.layer_1.delta = self.layer_1.delta.reshape(2, 2)
 
-            weight_delta = np.dot(
-                output_delta.reshape(-1, 1), self.layer_1.values[np.newaxis, :]
-            )
-            filters_delta = np.dot(self.layer_1.delta.T, self.conv.split(input, 3))
-
-            self.full_con.weights = self.full_con.weights - ALPHA * weight_delta
-            self.conv.filters = self.conv.filters - ALPHA * filters_delta
+            self.full_con.back_propagate(out_delta, self.layer_1.values, ALPHA)
+            self.conv.back_propagate(self.layer_1.delta, input, ALPHA)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     network = ConvNetwork(IMAGE, EXPECTED)
-    for i in range(1):
+    for i in range(5):
         network.fit()
     print(network.full_con.weights)
     print(network.conv.filters)

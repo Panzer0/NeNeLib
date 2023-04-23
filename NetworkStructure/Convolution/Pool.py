@@ -10,7 +10,6 @@ class Pool:
         self.size = size
         self.stride = stride
 
-
     def calc_h(self, image) -> int:
         return int((image.shape[0] - self.size) / self.stride + 1)
 
@@ -19,7 +18,7 @@ class Pool:
 
     def pool(self, image):
         subarrays = [
-            max(max(row) for row in image[y: y + self.size, x: x + self.size])
+            max(max(row) for row in image[y : y + self.size, x : x + self.size])
             for y in range(image.shape[0] - self.size + 1)[:: self.stride]
             for x in range(image.shape[1] - self.size + 1)[:: self.stride]
         ]
@@ -31,7 +30,7 @@ class Pool:
         indices = [
             sum_tuples(
                 np.unravel_index(
-                    (np.argmax(image[y: y + self.size, x: x + self.size])),
+                    (np.argmax(image[y : y + self.size, x : x + self.size])),
                     (self.size, self.size),
                 ),
                 (y, x),

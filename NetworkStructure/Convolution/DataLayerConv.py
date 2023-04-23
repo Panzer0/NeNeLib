@@ -44,7 +44,7 @@ class DataLayerConv:
 
     def split(self, size, stride=1):
         subarrays = [
-            self.image[y: y + size, x: x + size].T.flatten()
+            self.image[y : y + size, x : x + size].T.flatten()
             for x in range(self.image.shape[1] - size + 1)[::stride]
             for y in range(self.image.shape[0] - size + 1)[::stride]
         ]
