@@ -19,7 +19,7 @@ class Activation:
         return self.function.function(image)
 
     # todo
-    def back_propagate(self, data):
+    def apply_deriv(self, data):
         return self.function.derivative(data)
 
 
