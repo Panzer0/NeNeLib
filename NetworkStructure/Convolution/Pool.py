@@ -47,13 +47,17 @@ class Pool:
         mask[indices[..., 0], indices[..., 1]] = 1
         return mask
 
+    def inflate_deltas(self, deltas):
+        return np.repeat(np.repeat(deltas, self.size, axis=0), self.size, axis=1)
+
+    def expand_deltas(self, deltas):
+        return self.mask * self.inflate_deltas(deltas)
+
     def apply(self, image):
         self.mask = self.get_mask(image)
         return self.pool(image)
 
-    # todo
-    def back_propagate(self, data):
-        pass
+
 
 
 if __name__ == "__main__":
@@ -67,7 +71,14 @@ if __name__ == "__main__":
             [9, 2, 2, 8, 9, 7],
         ]
     )
+    deltas = np.array(
+        [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ]
+    )
     pll = Pool()
     print(pll.apply(image))
-    print(image)
     print(pll.mask)
+    print(f"\n-----\n{pll.expand_deltas(deltas)}\n-----")

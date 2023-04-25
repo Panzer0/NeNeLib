@@ -1,4 +1,3 @@
-from math import sqrt
 import numpy as np
 
 WEIGHTS_LOW = -0.01
