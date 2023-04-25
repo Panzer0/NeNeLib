@@ -1,10 +1,6 @@
 import numpy as np
 
 
-def sum_tuples(first, second):
-    return tuple(a + b for a, b in zip(first, second))
-
-
 class Pool:
     def __init__(self, size=2, stride=2):
         self.size = size
@@ -20,28 +16,29 @@ class Pool:
         return self.calc_h(image), self.calc_w(image)
 
     def pool(self, image):
-        subarrays = [
-            max(max(row) for row in image[y : y + self.size, x : x + self.size])
-            for y in range(image.shape[0] - self.size + 1)[:: self.stride]
-            for x in range(image.shape[1] - self.size + 1)[:: self.stride]
-        ]
-        return np.array(subarrays).reshape(
-            self.calc_h(image), self.calc_w(image)
-        )
+        h, w = self.calc_dims(image)
+        subarrays = np.zeros((h, w))
+        for i in range(h):
+            for j in range(w):
+                patch = image[
+                        i * self.stride: i * self.stride + self.size,
+                        j * self.stride: j * self.stride + self.size
+                        ]
+                subarrays[i, j] = np.max(patch)
+        return subarrays
 
     def get_max_indices(self, image):
         h, w = self.calc_dims(image)
-        indices = np.empty((h, w, 2), dtype=np.int32)
+        indices = np.zeros((h, w, 2), dtype=np.int32)
         for i in range(h):
             for j in range(w):
-                x, y = np.unravel_index(
-                    np.argmax(image[
-                              i * self.stride: i * self.stride + self.size,
-                              j * self.stride: j * self.stride + self.size
-                              ]),
-                    (self.size, self.size)
-                )
-                indices[i, j] = (i * self.stride + x, j * self.stride + y)
+                patch = image[
+                        i * self.stride: i * self.stride + self.size,
+                        j * self.stride: j * self.stride + self.size
+                        ]
+                index = np.unravel_index(np.argmax(patch), patch.shape)
+                indices[i, j] = (
+                    i * self.stride + index[0], j * self.stride + index[1])
         return indices
 
     def get_mask(self, image):
