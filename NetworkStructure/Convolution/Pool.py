@@ -16,6 +16,9 @@ class Pool:
     def calc_w(self, image) -> int:
         return int((image.shape[1] - self.size) / self.stride + 1)
 
+    def calc_dims(self, image):
+        return self.calc_h(image), self.calc_w(image)
+
     def pool(self, image):
         subarrays = [
             max(max(row) for row in image[y : y + self.size, x : x + self.size])
@@ -27,23 +30,28 @@ class Pool:
         )
 
     def get_max_indices(self, image):
-        indices = [
-            sum_tuples(
-                np.unravel_index(
-                    (np.argmax(image[y : y + self.size, x : x + self.size])),
-                    (self.size, self.size),
-                ),
-                (y, x),
-            )
-            for y in range(image.shape[0] - self.size + 1)[:: self.stride]
-            for x in range(image.shape[1] - self.size + 1)[:: self.stride]
-        ]
-        return np.array(indices).reshape(
-            self.calc_h(image), self.calc_w(image), 2
-        )
+        h, w = self.calc_dims(image)
+        indices = np.empty((h, w, 2), dtype=np.int32)
+        for i in range(h):
+            for j in range(w):
+                x, y = np.unravel_index(
+                    np.argmax(image[
+                              i * self.stride: i * self.stride + self.size,
+                              j * self.stride: j * self.stride + self.size
+                              ]),
+                    (self.size, self.size)
+                )
+                indices[i, j] = (i * self.stride + x, j * self.stride + y)
+        return indices
+
+    def get_mask(self, image):
+        indices = self.get_max_indices(image)
+        mask = np.zeros(image.shape[:2], dtype=np.uint8)
+        mask[indices[..., 0], indices[..., 1]] = 1
+        return mask
 
     def apply(self, image):
-        self.max_indices = self.get_max_indices(image)
+        self.mask = self.get_mask(image)
         return self.pool(image)
 
     # todo
@@ -64,4 +72,5 @@ if __name__ == "__main__":
     )
     pll = Pool()
     print(pll.apply(image))
-    print(pll.max_indices)
+    print(image)
+    print(pll.mask)
