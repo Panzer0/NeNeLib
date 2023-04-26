@@ -3,6 +3,7 @@ import numpy as np
 from NetworkStructure.Convolution.Conv import Conv
 from NetworkStructure.Convolution.Activation import Activation
 from NetworkStructure.Convolution.FullyConnected import FullyConnected
+from NetworkStructure.Convolution.Pool import Pool
 from NetworkStructure.Convolution.ValueLayerConv import ValueLayerConv
 
 ALPHA = 0.01
@@ -40,16 +41,18 @@ class ConvNetwork:
         self.conv = Conv(
             filters=FILTERS, dim=FILTER_SIZE, filter_count=FILTER_COUNT
         )
-        # todo
         # self.pool = Pool()
         self.activation = Activation()
         # todo: Remember to remove WEIGHTS, this is meant to be random
         # todo: At the same time I have to remember to set the shape parameter
-        # todo: How is it determined?
+        # todo: Determined as such:
+        # todo: h - Output parameter count
+        # todo: w - layer_1 pixel count (flattened width)
         self.full_con = FullyConnected(WEIGHTS)
 
     def forward_propagate(self, input):
         self.layer_1.values = self.activation.apply(self.conv.apply(input))
+
         # todo: Pooling goes here
 
         # todo: It'd be cool if I could remove the flattening process and make
@@ -62,17 +65,13 @@ class ConvNetwork:
         for input, expected in zip(self.input, self.expected):
             # todo: Implement pooling, remove magic numbers
             out_delta = self.forward_propagate(input) - expected
-            print(f"For {expected}: {out_delta}")
+            # print(f"For {expected}: {out_delta}")
             ## Layer 1 delta calculation
             # FC layer
             self.layer_1.delta = np.dot(out_delta, self.full_con.weights)
             # Activation function
-            self.layer_1.delta = (
-                self.layer_1.delta
-                * self.activation.apply_deriv(
-                    self.layer_1.values[np.newaxis, :]
-                )
-            )
+            self.layer_1.delta = self.layer_1.delta * self.activation.apply_deriv(self.layer_1.values[np.newaxis, :])
+
             # Restoring original shape
             # todo: Hard coded right now, I'll make this dependent on pooling
             self.layer_1.delta = self.layer_1.delta.reshape(2, 2)
@@ -83,8 +82,7 @@ class ConvNetwork:
 
 if __name__ == "__main__":
     network = ConvNetwork(IMAGE, EXPECTED)
-    for i in range(500):
+    for i in range(1):
         network.fit()
-        print("\n")
-    print(network.full_con.weights)
-    print(network.conv.filters)
+    # print(network.full_con.weights)
+    # print(network.conv.filters)

@@ -6,17 +6,17 @@ class Pool:
         self.size = size
         self.stride = stride
 
-    def calc_h(self, image) -> int:
-        return int((image.shape[0] - self.size) / self.stride + 1)
+    def calc_output_h(self, image_h) -> int:
+        return int((image_h - self.size) / self.stride + 1)
 
-    def calc_w(self, image) -> int:
-        return int((image.shape[1] - self.size) / self.stride + 1)
+    def calc_output_w(self, image_w) -> int:
+        return int((image_w - self.size) / self.stride + 1)
 
-    def calc_dims(self, image):
-        return self.calc_h(image), self.calc_w(image)
+    def calc_output_dims(self, img_shape):
+        return self.calc_output_h(img_shape[0]), self.calc_output_w(img_shape[1])
 
     def pool(self, image):
-        h, w = self.calc_dims(image)
+        h, w = self.calc_output_dims(image.shape)
         subarrays = np.zeros((h, w))
         for i in range(h):
             for j in range(w):
@@ -28,7 +28,7 @@ class Pool:
         return subarrays
 
     def get_max_indices(self, image):
-        h, w = self.calc_dims(image)
+        h, w = self.calc_output_dims(image.shape)
         indices = np.zeros((h, w, 2), dtype=np.int32)
         for i in range(h):
             for j in range(w):

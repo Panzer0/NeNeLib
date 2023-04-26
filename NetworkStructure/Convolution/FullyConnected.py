@@ -1,5 +1,7 @@
 import numpy as np
 
+from NetworkStructure.Convolution.Conv import Conv
+
 WEIGHTS_LOW = -0.01
 WEIGHTS_HIGH = 0.01
 
