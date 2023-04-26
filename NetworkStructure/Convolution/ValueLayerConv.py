@@ -6,4 +6,5 @@ from numpy import ndarray
 @dataclass
 class ValueLayerConv:
     values: Optional[ndarray] = None
+    pooled_values: Optional[ndarray] = None
     delta: Optional[ndarray] = None

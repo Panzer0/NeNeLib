@@ -1,13 +1,15 @@
 from math import sqrt
 import numpy as np
 
+LOW = -0.01
+HIGH = 0.01
 
 class Conv:
     def __init__(self, filters=None, filter_count=1, dim=3, stride=1,
                  padding=False):
         if filters is None:
             self.filters = np.random.uniform(
-                low=-0.01, high=0.01, size=(filter_count, dim * dim)
+                low=LOW, high=HIGH, size=(filter_count, dim * dim)
             )
         else:
             self.filters = filters

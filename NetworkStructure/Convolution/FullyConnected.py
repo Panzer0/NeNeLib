@@ -2,8 +2,8 @@ import numpy as np
 
 from NetworkStructure.Convolution.Conv import Conv
 
-WEIGHTS_LOW = -0.01
-WEIGHTS_HIGH = 0.01
+WEIGHTS_LOW = -0.1
+WEIGHTS_HIGH = 0.1
 
 
 class FullyConnected:
@@ -11,7 +11,7 @@ class FullyConnected:
         if weights is None:
             # todo: Test the randomly generated variant
             self.weights = np.random.uniform(
-                low=-WEIGHTS_LOW, high=WEIGHTS_HIGH, size=shape
+                low=WEIGHTS_LOW, high=WEIGHTS_HIGH, size=shape
             )
         else:
             self.weights = weights
