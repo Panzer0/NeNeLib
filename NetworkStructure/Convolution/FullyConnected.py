@@ -9,7 +9,6 @@ WEIGHTS_HIGH = 0.1
 class FullyConnected:
     def __init__(self, weights=None, shape=(2, 4)):
         if weights is None:
-            # todo: Test the randomly generated variant
             self.weights = np.random.uniform(
                 low=WEIGHTS_LOW, high=WEIGHTS_HIGH, size=shape
             )
@@ -19,11 +18,8 @@ class FullyConnected:
     def apply(self, image):
         return np.dot(image.flatten(), self.weights.T)
 
-    # todo
     def back_propagate(self, delta, values, alpha):
-        weight_delta = np.dot(
-            delta.reshape(-1, 1), values[np.newaxis, :]
-        )
+        weight_delta = np.dot(delta.reshape(-1, 1), values[np.newaxis, :])
         self.weights = self.weights - alpha * weight_delta
 
 

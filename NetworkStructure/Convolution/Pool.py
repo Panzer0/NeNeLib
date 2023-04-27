@@ -13,7 +13,9 @@ class Pool:
         return int((image_w - self.size) / self.stride + 1)
 
     def calc_output_dims(self, img_shape):
-        return self.calc_output_h(img_shape[0]), self.calc_output_w(img_shape[1])
+        return self.calc_output_h(img_shape[0]), self.calc_output_w(
+            img_shape[1]
+        )
 
     def pool(self, image):
         h, w = self.calc_output_dims(image.shape)
@@ -22,7 +24,7 @@ class Pool:
             for j in range(w):
                 patch = image[
                         i * self.stride: i * self.stride + self.size,
-                        j * self.stride: j * self.stride + self.size
+                        j * self.stride: j * self.stride + self.size,
                         ]
                 subarrays[i, j] = np.max(patch)
         return subarrays
@@ -34,11 +36,13 @@ class Pool:
             for j in range(w):
                 patch = image[
                         i * self.stride: i * self.stride + self.size,
-                        j * self.stride: j * self.stride + self.size
+                        j * self.stride: j * self.stride + self.size,
                         ]
                 index = np.unravel_index(np.argmax(patch), patch.shape)
                 indices[i, j] = (
-                    i * self.stride + index[0], j * self.stride + index[1])
+                    i * self.stride + index[0],
+                    j * self.stride + index[1],
+                )
         return indices
 
     def get_mask(self, image):
@@ -48,7 +52,9 @@ class Pool:
         return mask
 
     def inflate_deltas(self, deltas):
-        return np.repeat(np.repeat(deltas, self.size, axis=0), self.size, axis=1)
+        return np.repeat(
+            np.repeat(deltas, self.size, axis=0), self.size, axis=1
+        )
 
     def expand_deltas(self, deltas):
         return self.mask * self.inflate_deltas(deltas)
@@ -56,8 +62,6 @@ class Pool:
     def apply(self, image):
         self.mask = self.get_mask(image)
         return self.pool(image)
-
-
 
 
 if __name__ == "__main__":
@@ -71,13 +75,7 @@ if __name__ == "__main__":
             [9, 2, 2, 8, 9, 7],
         ]
     )
-    deltas = np.array(
-        [
-            [1, 2, 3],
-            [4, 5, 6],
-            [7, 8, 9]
-        ]
-    )
+    deltas = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     pll = Pool()
     print(pll.apply(image))
     print(pll.mask)
