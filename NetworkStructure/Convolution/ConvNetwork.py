@@ -72,6 +72,7 @@ class ConvNetwork:
     def fit(self):
         for input, expected in zip(self.input, self.expected):
             out_delta = self.forward_propagate(input) - expected
+            print(f"For {expected}:\t{out_delta}")
             # Layer 1 delta calculation
             ## FC layer
             self.layer_1.delta = np.dot(out_delta, self.full_con.weights)
