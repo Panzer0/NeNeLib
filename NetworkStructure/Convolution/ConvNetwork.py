@@ -1,5 +1,6 @@
 import numpy as np
 
+from MNISTHandler import MNISTHandler
 from NetworkStructure.Convolution.Conv import Conv
 from NetworkStructure.Convolution.Activation import Activation
 from NetworkStructure.Convolution.FullyConnected import FullyConnected
@@ -7,9 +8,9 @@ from NetworkStructure.Convolution.Pool import Pool
 from NetworkStructure.Convolution.ValueLayerConv import ValueLayerConv
 
 ALPHA = 0.01
-FILTER_COUNT = 4
+FILTER_COUNT = 16
 FILTER_SIZE = 3
-GENERATION_COUNT = 500
+GENERATION_COUNT = 300
 PADDING = False
 
 EXPECTED = np.array([[0, 1, 0], [1, 0, 0]])
@@ -72,7 +73,7 @@ class ConvNetwork:
     def fit(self):
         for input, expected in zip(self.input, self.expected):
             out_delta = self.forward_propagate(input) - expected
-            print(f"For {expected}:\t{out_delta}")
+            # print(f"For {expected}: {out_delta + expected}")
             # Layer 1 delta calculation
             ## FC layer
             self.layer_1.delta = np.dot(out_delta, self.full_con.weights)
@@ -90,9 +91,29 @@ class ConvNetwork:
                 out_delta, self.layer_1.pooled_values, ALPHA
             )
             self.conv.back_propagate(self.layer_1.delta, input, ALPHA)
+            # print("|", end="")
+        # print("-")
+
+    def validate_multi_class(self, input_data, output_data):
+        total, correct = 0, 0
+        for input, output in zip(input_data, output_data):
+            total += 1
+            result = self.forward_propagate(input)
+            # print(f"For {np.argmax(output)}: {np.argmax(result)} (second:{np.argsort(result)[-2]})")
+            correct += np.argmax(result) == np.argmax(output)
+        return float(correct / total * 100)
 
 
 if __name__ == "__main__":
-    network = ConvNetwork(IMAGE, EXPECTED)
-    for i in range(GENERATION_COUNT):
+    handler = MNISTHandler()
+    train_input = handler.get_test_input(amount=300, conv=True)
+    train_output = handler.get_train_output(amount=300, conv=True)
+    test_input = handler.get_test_input(amount=30, conv=True)
+    test_output = handler.get_test_output(amount=30, conv=True)
+
+    network = ConvNetwork(train_input, train_output)
+    # network = ConvNetwork(IMAGE, EXPECTED)
+    for i in range(GENERATION_COUNT * 100):
         network.fit()
+        print(f"For testing  [{i}]: {network.validate_multi_class(test_input, test_output)}")
+        print(f"For training [{i}]: {network.validate_multi_class(train_input, train_output)}\n")
