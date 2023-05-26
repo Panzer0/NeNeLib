@@ -13,51 +13,35 @@ class Pool:
         return int((image_w - self.size) / self.stride + 1)
 
     def calc_output_dims(self, img_shape):
-        return self.calc_output_h(img_shape[0]), self.calc_output_w(img_shape[1])
+        return self.calc_output_h(img_shape[0]), self.calc_output_w(
+            img_shape[1]
+        )
 
     def pool(self, image):
+        """
+        :return:
+            max_patches: The max-pooled image
+            mask: A mask which indicates the selected values
+        """
         h, w = self.calc_output_dims(image.shape)
-        subarrays = np.zeros((h, w))
-        for i in range(h):
-            for j in range(w):
-                patch = image[
-                        i * self.stride: i * self.stride + self.size,
-                        j * self.stride: j * self.stride + self.size
-                        ]
-                subarrays[i, j] = np.max(patch)
-        return subarrays
-
-    def get_max_indices(self, image):
-        h, w = self.calc_output_dims(image.shape)
-        indices = np.zeros((h, w, 2), dtype=np.int32)
-        for i in range(h):
-            for j in range(w):
-                patch = image[
-                        i * self.stride: i * self.stride + self.size,
-                        j * self.stride: j * self.stride + self.size
-                        ]
-                index = np.unravel_index(np.argmax(patch), patch.shape)
-                indices[i, j] = (
-                    i * self.stride + index[0], j * self.stride + index[1])
-        return indices
-
-    def get_mask(self, image):
-        indices = self.get_max_indices(image)
-        mask = np.zeros(image.shape[:2], dtype=np.uint8)
-        mask[indices[..., 0], indices[..., 1]] = 1
-        return mask
+        # h x w patches, each self.size x self.size shaped
+        patches = image.reshape(h, self.size, w, self.size)
+        max_patches = np.max(patches, axis=(1, 3))
+        mask = patches == max_patches[:, np.newaxis, :, np.newaxis]
+        mask = mask.reshape(h * self.size, w * self.size)
+        return max_patches, mask
 
     def inflate_deltas(self, deltas):
-        return np.repeat(np.repeat(deltas, self.size, axis=0), self.size, axis=1)
+        return np.repeat(
+            np.repeat(deltas, self.size, axis=0), self.size, axis=1
+        )
 
     def expand_deltas(self, deltas):
         return self.mask * self.inflate_deltas(deltas)
 
     def apply(self, image):
-        self.mask = self.get_mask(image)
-        return self.pool(image)
-
-
+        pooled, self.mask = self.pool(image)
+        return pooled
 
 
 if __name__ == "__main__":
@@ -71,13 +55,7 @@ if __name__ == "__main__":
             [9, 2, 2, 8, 9, 7],
         ]
     )
-    deltas = np.array(
-        [
-            [1, 2, 3],
-            [4, 5, 6],
-            [7, 8, 9]
-        ]
-    )
+    deltas = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     pll = Pool()
     print(pll.apply(image))
     print(pll.mask)
