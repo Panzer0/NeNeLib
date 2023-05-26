@@ -7,7 +7,7 @@ HIGH = 0.01
 
 class Conv:
     def __init__(
-            self, filters=None, filter_count=1, dim=3, stride=1, padding=False
+        self, filters=None, filter_count=1, dim=3, stride=1, padding=False
     ):
         if filters is None:
             self.filters = np.random.uniform(
@@ -29,7 +29,7 @@ class Conv:
         img_copy = np.pad(image, ((1, 1), (1, 1))) if self.padding else image
         rows, cols = img_copy.shape
         subarrays = [
-            img_copy[y: y + self.f_shape, x: x + self.f_shape].reshape(-1)
+            img_copy[y : y + self.f_shape, x : x + self.f_shape].reshape(-1)
             for x in range(0, cols - self.f_shape + 1, self.stride)
             for y in range(0, rows - self.f_shape + 1, self.stride)
         ]

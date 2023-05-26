@@ -13,35 +13,6 @@ FILTER_SIZE = 3
 GENERATION_COUNT = 300
 PADDING = False
 
-EXPECTED = np.array([[0, 1, 0], [1, 0, 0]])
-IMAGE = np.array(
-    [
-        [
-            [1, 0.7, 0.7, 0.5],
-            [6, 0.2, 0.9, 1],
-            [0, 0.9, 0.3, 0.6],
-            [0.2, 0.6, 0.1, 0.8],
-        ],
-        [
-            [1, 0.6, 0.7, 0.5],
-            [0.1, 0.2, 0.9, 0.1],
-            [1, 0.9, 0.3, 0.6],
-            [0.1, 0.6, 1, 0.8],
-        ],
-    ]
-)
-
-
-# FILTERS = np.array(
-#     [
-#         [0.1, 0.2, -0.1, -0.1, 0.1, 0.9, 0.1, 0.4, 0.1],
-#         [0.3, 1.1, -0.3, 0.1, 0.2, 0.0, 0.0, 1.3, 0.1],
-#         [-0.6, 1.8, -0.1, 0.7, 0.5, 0.7, -0.5, 3.3, 0.1],
-#         [0.2, -0.6, -0.6, 0.9, 0.4, -0.6, -0.3, 2.1, 1.0],
-#     ]
-# )
-# WEIGHTS = np.array([[0.1, -0.2, 0.1, 0.3], [0.2, 0.1, 0.5, -0.3]])
-
 
 class ConvNetwork:
     def __init__(self, input, expected):
@@ -82,8 +53,8 @@ class ConvNetwork:
             self.layer_1.delta = self.pool.expand_deltas(self.layer_1.delta)
             # Activation function
             self.layer_1.delta = (
-                    self.layer_1.delta
-                    * self.activation.apply_deriv(self.layer_1.values)
+                self.layer_1.delta
+                * self.activation.apply_deriv(self.layer_1.values)
             )
 
             self.full_con.back_propagate(
@@ -105,8 +76,8 @@ class ConvNetwork:
 
 if __name__ == "__main__":
     handler = MNISTHandler()
-    train_input = handler.get_train_input(amount=6_000, conv=True)
-    train_output = handler.get_train_output(amount=6_000, conv=True)
+    train_input = handler.get_train_input(amount=1_000, conv=True)
+    train_output = handler.get_train_output(amount=1_000, conv=True)
     test_input = handler.get_test_input(amount=1_000, conv=True)
     test_output = handler.get_test_output(amount=1_000, conv=True)
 
@@ -114,5 +85,9 @@ if __name__ == "__main__":
     # network = ConvNetwork(IMAGE, EXPECTED)
     for i in range(GENERATION_COUNT):
         network.fit()
-        print(f"For testing  [{i}]: {network.validate_multi_class(test_input, test_output)}")
-        print(f"For training [{i}]: {network.validate_multi_class(train_input, train_output)}\n")
+        print(
+            f"For testing  [{i}]: {network.validate_multi_class(test_input, test_output)}"
+        )
+        print(
+            f"For training [{i}]: {network.validate_multi_class(train_input, train_output)}\n"
+        )
