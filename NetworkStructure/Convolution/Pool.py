@@ -27,7 +27,7 @@ class Pool:
         # h x w patches, each self.size x self.size shaped
         patches = image.reshape(h, self.size, w, self.size)
         max_patches = np.max(patches, axis=(1, 3))
-        mask = (patches == max_patches[:, np.newaxis, :, np.newaxis])
+        mask = patches == max_patches[:, np.newaxis, :, np.newaxis]
         mask = mask.reshape(h * self.size, w * self.size)
         return max_patches, mask
 
