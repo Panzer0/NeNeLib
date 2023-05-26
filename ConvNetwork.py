@@ -65,7 +65,7 @@ class ConvNetwork:
         self.full_con = FullyConnected(shape=(weight_h, weight_w))
 
     def forward_propagate(self, input):
-        self.layer_1.values = self.activation.apply(self.conv.apply(input))
+        self.layer_1a.values = self.activation.apply(self.conv.apply(input))
         self.layer_1.pooled_values = self.pool.apply(self.layer_1.values)
         self.layer_1.pooled_values = self.layer_1.pooled_values.flatten()
         return self.full_con.apply(self.layer_1.pooled_values)
@@ -74,14 +74,13 @@ class ConvNetwork:
         for input, expected in zip(self.input, self.expected):
             out_delta = self.forward_propagate(input) - expected
             # print(f"For {expected}: {out_delta + expected}")
-            # Layer 1 delta calculation
-            ## FC layer
+            # FC layer
             self.layer_1.delta = np.dot(out_delta, self.full_con.weights)
-            ## Restoring original shape
+            # Restoring original shape
             self.layer_1.delta = self.layer_1.delta.reshape(self.layer_1_shape)
-            ## Pool layer
+            # Pool layer
             self.layer_1.delta = self.pool.expand_deltas(self.layer_1.delta)
-            ## Activation function
+            # Activation function
             self.layer_1.delta = (
                     self.layer_1.delta
                     * self.activation.apply_deriv(self.layer_1.values)
@@ -106,14 +105,14 @@ class ConvNetwork:
 
 if __name__ == "__main__":
     handler = MNISTHandler()
-    train_input = handler.get_test_input(amount=300, conv=True)
-    train_output = handler.get_train_output(amount=300, conv=True)
-    test_input = handler.get_test_input(amount=30, conv=True)
-    test_output = handler.get_test_output(amount=30, conv=True)
+    train_input = handler.get_train_input(amount=60_000, conv=True)
+    train_output = handler.get_train_output(amount=60_000, conv=True)
+    test_input = handler.get_test_input(amount=10_000, conv=True)
+    test_output = handler.get_test_output(amount=10_000, conv=True)
 
     network = ConvNetwork(train_input, train_output)
     # network = ConvNetwork(IMAGE, EXPECTED)
-    for i in range(GENERATION_COUNT * 100):
+    for i in range(GENERATION_COUNT):
         network.fit()
         print(f"For testing  [{i}]: {network.validate_multi_class(test_input, test_output)}")
         print(f"For training [{i}]: {network.validate_multi_class(train_input, train_output)}\n")
