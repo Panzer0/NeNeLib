@@ -19,7 +19,7 @@ class Pool:
 
     def pool(self, image):
         """
-        :return:
+        Returns:
             max_patches: The max-pooled image
             mask: A mask which indicates the selected values
         """
