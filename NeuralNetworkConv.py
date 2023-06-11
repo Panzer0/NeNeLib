@@ -82,7 +82,6 @@ if __name__ == "__main__":
     test_output = handler.get_test_output(amount=1_000, conv=True)
 
     network = ConvNetwork(train_input, train_output)
-    # network = ConvNetwork(IMAGE, EXPECTED)
     for i in range(GENERATION_COUNT):
         network.fit()
         print(
