@@ -1,5 +1,5 @@
-# Neural network library
-  A library dedicated to creating, training and running numpy-based neural networks. 
+# NeNeLib
+  A library dedicated to creating, training and running numpy-based neural networks, implemented from the ground up in NumPy. 
 
   Notable features include:
   * Support for convolutional neural networks (CNNs) (exclusive to the *Convolution* branch)
